@@ -1,0 +1,80 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true,
+    "output": "C:\\ProgramData\\DiscordTunnel\\tunnel.log"
+  },
+  "dns": {
+    "servers": [
+      { "type": "https", "tag": "doh-cf", "server": "1.1.1.1", "path": "/dns-query" },
+      { "type": "local", "tag": "local" }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [
+          "discord.com", "discord.gg", "discordapp.com", "discordapp.net",
+          "discord.media", "discordstatus.com", "discord.co"
+        ],
+        "server": "doh-cf"
+      }
+    ],
+    "final": "local",
+    "strategy": "prefer_ipv4"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["172.19.0.1/30"],
+      "mtu": 1400,
+      "auto_route": true,
+      "strict_route": false,
+      "stack": "mixed"
+    }
+  ],
+  "outbounds": [
+    { "type": "direct", "tag": "direct" }
+  ],
+  "endpoints": [
+    {
+      "type": "wireguard",
+      "tag": "warp",
+      "address": ["172.16.0.2/32"],
+      "private_key": "REPLACE_WITH_YOUR_WARP_PRIVATE_KEY_BASE64",
+      "mtu": 1280,
+      "peers": [
+        {
+          "address": "162.159.192.1",
+          "port": 2408,
+          "public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+          "reserved": [0, 0, 0],
+          "allowed_ips": ["0.0.0.0/0", "::/0"],
+          "persistent_keepalive_interval": 25
+        }
+      ]
+    }
+  ],
+  "route": {
+    "default_domain_resolver": "local",
+    "auto_detect_interface": true,
+    "rules": [
+      { "action": "sniff" },
+      { "protocol": "dns", "action": "hijack-dns" },
+      {
+        "domain_suffix": [
+          "discord.com", "discord.gg", "discordapp.com", "discordapp.net",
+          "discord.media", "discordstatus.com", "discord.co"
+        ],
+        "outbound": "warp"
+      },
+      {
+        "process_name": [
+          "Discord.exe", "DiscordPTB.exe", "DiscordCanary.exe",
+          "DiscordDevelopment.exe", "Update.exe"
+        ],
+        "outbound": "warp"
+      }
+    ],
+    "final": "direct"
+  }
+}

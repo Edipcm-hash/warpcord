@@ -1,0 +1,7 @@
+# secrets and generated artifacts
+config.json
+bin/
+*.log
+_peer.pem
+__pycache__/
+*.pyc
