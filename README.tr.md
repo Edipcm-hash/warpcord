@@ -1,3 +1,5 @@
+Türkçe | **[English](README.md)**
+
 # WarpCord
 
 **Cloudflare WARP üzerinden Discord'a özel split tunnel.** VPS yok, hesap yok, tüm cihazı VPN'e sokmak yok — sadece Discord trafiği tünelden çıkar, geri kalan her şey doğrudan gitmeye devam eder.

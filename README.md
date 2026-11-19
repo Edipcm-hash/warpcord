@@ -1,3 +1,5 @@
+**[Türkçe](README.tr.md)** | English
+
 # WarpCord
 
 **A Discord-only split tunnel over Cloudflare WARP.** No VPS, no account, no full-device VPN — only Discord's traffic leaves through the tunnel; everything else keeps going out directly.
