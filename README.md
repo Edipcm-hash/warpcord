@@ -117,6 +117,9 @@ Then fully quit Discord (tray icon too) and start it again.
 # Should return 162.159.x.x — not the ISP block IP
 Resolve-DnsName discord.com -Type A
 
+# No cached block-page answer (empty output is the good case)
+Get-DnsClientCache | Where-Object { $_.Data -eq '195.175.254.2' }
+
 # Live log: Discord flows go through wireguard[warp], the rest through direct
 Get-Content C:\ProgramData\DiscordTunnel\tunnel.log -Tail 30
 ```

@@ -107,7 +107,21 @@ $defaultRoute = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction Silentl
                 Sort-Object RouteMetric | Select-Object -First 1
 $ifAlias = $defaultRoute.InterfaceAlias
 if ($ifAlias) {
-    @{ interface = $ifAlias } | ConvertTo-Json | Set-Content (Join-Path $InstallDir 'dns-backup.json') -Encoding UTF8
+    # Remember whether the adapter had static DNS, so uninstall can restore it
+    # instead of blindly falling back to DHCP. Never overwrite an existing
+    # backup: re-running the installer must not record our own DNS as "original".
+    $backupPath = Join-Path $InstallDir 'dns-backup.json'
+    if (-not (Test-Path $backupPath)) {
+        $staticDns = ''
+        try {
+            $guid = (Get-NetAdapter -Name $ifAlias -ErrorAction Stop).InterfaceGuid
+            $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$guid"
+            $staticDns = [string](Get-ItemProperty -Path $regPath -Name NameServer -ErrorAction SilentlyContinue).NameServer
+        } catch { }
+        @{ interface = $ifAlias; static = $staticDns } | ConvertTo-Json |
+            Set-Content $backupPath -Encoding UTF8
+        Log "DNS yedegi alindi: $ifAlias (statik: '$staticDns')"
+    }
     try {
         Set-DnsClientServerAddress -InterfaceAlias $ifAlias -ServerAddresses @('1.1.1.1', '1.0.0.1') -ErrorAction Stop
         Log "DNS ayarlandi: $ifAlias -> 1.1.1.1, 1.0.0.1"

@@ -117,6 +117,9 @@ Sonra Discord'u tamamen kapat (tepsi simgesinden de) ve yeniden aç.
 # 162.159.x.x dönmeli — ISP'nin blok IP'si değil
 Resolve-DnsName discord.com -Type A
 
+# Önbellekte blok sayfası cevabı olmamalı (boş çıktı iyi durum)
+Get-DnsClientCache | Where-Object { $_.Data -eq '195.175.254.2' }
+
 # Canlı log: Discord akışları wireguard[warp], gerisi direct
 Get-Content C:\ProgramData\DiscordTunnel\tunnel.log -Tail 30
 ```

@@ -16,14 +16,22 @@ Start-Sleep -Seconds 2
 Write-Host 'Firewall kurali kaldiriliyor...'
 & netsh advfirewall firewall delete rule name="DiscordTunnel" 2>&1 | Out-Null
 
-# adaptor DNS'ini DHCP'ye geri dondur
+# adaptor DNS'ini eski haline dondur (statik ise ayni adresler, degilse DHCP)
 $backupFile = Join-Path $InstallDir 'dns-backup.json'
 if (Test-Path $backupFile) {
     try {
-        $alias = (Get-Content $backupFile -Raw | ConvertFrom-Json).interface
+        $backup = Get-Content $backupFile -Raw | ConvertFrom-Json
+        $alias = $backup.interface
         if ($alias) {
-            Set-DnsClientServerAddress -InterfaceAlias $alias -ResetServerAddresses -ErrorAction Stop
-            Write-Host "DNS geri alindi (DHCP): $alias"
+            $restored = $backup.static
+            if ($restored) {
+                $servers = ($restored -split '[, ]+') | Where-Object { $_ }
+                Set-DnsClientServerAddress -InterfaceAlias $alias -ServerAddresses $servers -ErrorAction Stop
+                Write-Host "DNS geri alindi (statik): $alias -> $($servers -join ', ')"
+            } else {
+                Set-DnsClientServerAddress -InterfaceAlias $alias -ResetServerAddresses -ErrorAction Stop
+                Write-Host "DNS geri alindi (DHCP): $alias"
+            }
         }
     } catch {
         Write-Host "UYARI: DNS geri alinamadi: $($_.Exception.Message)"
