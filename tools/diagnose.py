@@ -152,7 +152,7 @@ def main():
     print("\n" + "=" * 66)
     if poisoned or not udp_ok:
         print(" Verdict: traffic to Discord is interfered with at DNS/SNI level.")
-        print(" WarpCord solves exactly this: DoH for Discord domains + a real tunnel.")
+        print(" WarpCord solves exactly this: DoH for name resolution + a real tunnel.")
     else:
         print(" Verdict: no interference detected on this network.")
     print("=" * 66)

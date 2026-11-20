@@ -51,7 +51,7 @@ Cloudflare WARP was the sweet spot: **free, no account, real tunnel, UDP support
 
 - **sing-box** creates a TUN device and takes over the default route.
 - **Routing rules** decide per flow: Discord by process name *and* by domain suffix → `warp`; everything else → `direct` (the default final).
-- **DNS** is hijacked into sing-box; only Discord domains are resolved over DNS-over-HTTPS (1.1.1.1), everything else uses the normal system resolver. That kills the DNS poisoning for Discord only.
+- **DNS** is hijacked into sing-box and answered over DNS-over-HTTPS (1.1.1.1), and the installer points the physical adapter at `1.1.1.1` so Windows stops asking the ISP resolver in parallel. That is the only thing outside the tunnel that gets touched — see the FAQ for why a tunnels-only DNS rule was not enough.
 - **The tunnel exit is a free WARP device.** There is no paid server anywhere in the chain.
 
 ### The WARP part (the fun bit)
@@ -105,6 +105,7 @@ install.bat
 - downloads sing-box (pinned to 1.14.4) if it's not in `bin\`
 - copies everything to `C:\ProgramData\DiscordTunnel`
 - adds an outbound firewall rule for the binary
+- points the adapter's DNS at `1.1.1.1` and flushes the resolver cache (backed up, restored by `uninstall.bat`)
 - registers the `DiscordOnlyTunnel` scheduled task (SYSTEM, at startup, restarts on failure)
 - starts it and verifies the result
 

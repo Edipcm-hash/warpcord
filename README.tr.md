@@ -51,7 +51,7 @@ Cloudflare WARP tam orta noktaydı: **ücretsiz, hesapsız, gerçek tünel, UDP 
 
 - **sing-box** bir TUN cihazı oluşturup varsayılan rotayı devralır.
 - **Yönlendirme kuralları** akış bazında karar verir: süreç adı *veya* alan adı Discord'a aitse → `warp`, değilse → `direct`.
-- **DNS** sing-box'a kaçırılır; sadece Discord alan adları DoH (1.1.1.1) ile çözülür, gerisi normal sistem çözücüsünü kullanır. Böylece DNS zehirlenmesi yalnızca Discord için devre dışı kalır.
+- **DNS** sing-box'a kaçırılır ve DoH (1.1.1.1) ile yanıtlanır; kurulum ayrıca fiziksel adaptörü `1.1.1.1`e yönlendirir, böylece Windows ISP çözücüsüne paralel sormayı bırakır. Tünel dışında dokunulan tek şey budur — neden yalnızca Discord'a özel DNS kuralının yetmediğini SSS'te anlattım.
 - **Tünelin çıkışı ücretsiz bir WARP cihazıdır.** Zincirde ücretli hiçbir sunucu yok.
 
 ### WARP kısmı (işin eğlenceli tarafı)
@@ -105,6 +105,7 @@ install.bat
 - sing-box'ı indirir (1.14.4'e sabitli), `bin\` içinde yoksa
 - her şeyi `C:\ProgramData\DiscordTunnel` altına kopyalar
 - binary için giden firewall kuralı ekler
+- adaptör DNS'ini `1.1.1.1`e alır ve çözücü önbelleğini boşaltır (yedeklenir, `uninstall.bat` geri getirir)
 - `DiscordOnlyTunnel` görevini oluşturur (SYSTEM, açılışta, hata durumunda yeniden başlar)
 - başlatır ve sonucu doğrular
 
