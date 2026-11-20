@@ -69,10 +69,27 @@ if (-not (Test-Path $bin)) {
     }
 }
 
+# ----------------------------------------------------------------- stop ---
+# Stop any running instance before touching the files, otherwise the copy of
+# sing-box.exe fails with "file is being used by another process".
+try { Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue } catch {}
+try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
+Get-Process sing-box -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 1200
+
 # ---------------------------------------------------------------- files ---
 foreach ($pair in @(@($bin, 'sing-box.exe'), @($configPath, 'config.json'))) {
-    Copy-Item $pair[0] (Join-Path $InstallDir $pair[1]) -Force
-    Log "kopyalandi: $($pair[1])"
+    $target = Join-Path $InstallDir $pair[1]
+    for ($attempt = 1; $attempt -le 5; $attempt++) {
+        try {
+            Copy-Item $pair[0] $target -Force -ErrorAction Stop
+            Log "kopyalandi: $($pair[1])"
+            break
+        } catch {
+            if ($attempt -eq 5) { Log "HATA: $($pair[1]) kopyalanamadi: $($_.Exception.Message)"; exit 1 }
+            Start-Sleep -Seconds 1
+        }
+    }
 }
 
 # ------------------------------------------------------------ firewall ---
@@ -102,11 +119,6 @@ if ($ifAlias) {
 }
 
 # --------------------------------------------------------------- task ---
-try { Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue } catch {}
-try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
-Get-Process sing-box -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-Start-Sleep -Milliseconds 800
-
 try {
     $action    = New-ScheduledTaskAction -Execute (Join-Path $InstallDir 'sing-box.exe') `
                     -Argument "run -c `"$(Join-Path $InstallDir 'config.json')`"" -WorkingDirectory $InstallDir
