@@ -177,10 +177,8 @@ def build_config(account: dict, log_path: str) -> dict:
         "dns": {
             "servers": [
                 {"type": "https", "tag": "doh-cf", "server": "1.1.1.1", "path": "/dns-query"},
-                {"type": "local", "tag": "local"},
             ],
-            "rules": [{"domain_suffix": DISCORD_SUFFIX, "server": "doh-cf"}],
-            "final": "local",
+            "final": "doh-cf",
             "strategy": "prefer_ipv4",
         },
         "inbounds": [{
@@ -209,7 +207,7 @@ def build_config(account: dict, log_path: str) -> dict:
             }],
         }],
         "route": {
-            "default_domain_resolver": "local",
+            "default_domain_resolver": "doh-cf",
             "auto_detect_interface": True,
             "rules": [
                 {"action": "sniff"},

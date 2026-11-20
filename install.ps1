@@ -80,6 +80,27 @@ foreach ($pair in @(@($bin, 'sing-box.exe'), @($configPath, 'config.json'))) {
 & netsh advfirewall firewall add rule name="DiscordTunnel" dir=out program="$InstallDir\sing-box.exe" action=allow profile=any 2>&1 | Out-Null
 Log 'firewall izni eklendi'
 
+# ---------------------------------------------------------------- dns ---
+# Windows queries every configured resolver in parallel, so the ISP resolver
+# keeps poisoning Discord names even while the tunnel answers correctly.
+# Point the physical adapter at an off-link resolver: those packets get routed
+# into the tunnel and hijacked by sing-box, which answers everything over DoH.
+$defaultRoute = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+                Where-Object { $_.NextHop -ne '0.0.0.0' -and $_.InterfaceAlias -notmatch 'tun|sing' } |
+                Sort-Object RouteMetric | Select-Object -First 1
+$ifAlias = $defaultRoute.InterfaceAlias
+if ($ifAlias) {
+    @{ interface = $ifAlias } | ConvertTo-Json | Set-Content (Join-Path $InstallDir 'dns-backup.json') -Encoding UTF8
+    try {
+        Set-DnsClientServerAddress -InterfaceAlias $ifAlias -ServerAddresses @('1.1.1.1', '1.0.0.1') -ErrorAction Stop
+        Log "DNS ayarlandi: $ifAlias -> 1.1.1.1, 1.0.0.1"
+    } catch {
+        Log "UYARI: adaptor DNS'i ayarlanamadi: $($_.Exception.Message)"
+    }
+} else {
+    Log 'UYARI: varsayilan rota bulunamadi, DNS ayarlanmadi'
+}
+
 # --------------------------------------------------------------- task ---
 try { Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue } catch {}
 try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
@@ -112,6 +133,7 @@ $ad = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Name -mat
 Log "adaptor: $(if ($ad) { ($ad | ForEach-Object { $_.Name + '[' + $_.Status + ']' }) -join ', ' } else { 'YOK' })"
 
 Clear-DnsClientCache -ErrorAction SilentlyContinue
+& ipconfig /flushdns 2>&1 | Out-Null
 Start-Sleep -Seconds 1
 $ips = (Resolve-DnsName discord.com -Type A -ErrorAction SilentlyContinue |
         Where-Object { $_.IPAddress } | Select-Object -ExpandProperty IPAddress) -join ', '

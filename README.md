@@ -157,6 +157,8 @@ One more sanity check — the Discord API through the tunnel should answer with 
 
 **Is this a VPN?** No. Only Discord's flows enter the tunnel. Your IP is unchanged for everything else.
 
+**Why does the installer change my DNS?** Because Windows asks *every* configured resolver in parallel: while the tunnel answered correctly, the ISP resolver kept handing out the block-page IP for Discord and Windows cached both answers. Pointing the adapter at `1.1.1.1` makes those DNS packets land in the tunnel, where sing-box answers them over DoH. It is the only system setting touched, and `uninstall.bat` restores DHCP.
+
 **Does voice work?** Yes — WARP carries UDP and the process rule catches Discord's UDP flows.
 
 **How fast is it?** WARP-depended, typically 20–100 Mbps. Fine for Discord, not for downloads (which don't use it anyway).

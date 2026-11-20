@@ -157,6 +157,8 @@ Bir kontrol daha — tünelden Discord API'si gateway adresini dönmeli:
 
 **Bu bir VPN mi?** Hayır. Sadece Discord akışları tünele girer. Diğer her şeyde IP'n değişmez.
 
+**Kurulum neden DNS'imi değiştiriyor?** Çünkü Windows *tüm* tanımlı çözücülere paralel soruyor: tünel doğru cevabı verirken ISP çözücüsü Discord için blok sayfası IP'sini döndürmeye devam ediyor ve Windows iki cevabı da önbelleğe alıyor. Adaptörü `1.1.1.1`e yönlendirince bu DNS paketleri tünele giriyor ve sing-box onları DoH ile yanıtlıyor. Dokunulan tek sistem ayarı bu; `uninstall.bat` DHCP'yi geri getiriyor.
+
 **Ses çalışıyor mu?** Evet — WARP UDP taşır ve süreç kuralı Discord'un UDP akışlarını yakalar.
 
 **Ne kadar hızlı?** WARP'a bağlı, tipik 20–100 Mbps. Discord için fazlasıyla yeter; indirmeler zaten tüneli kullanmıyor.
