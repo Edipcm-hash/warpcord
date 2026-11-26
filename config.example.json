@@ -8,18 +8,19 @@
     "servers": [
       {
         "type": "https",
-        "tag": "doh-cf",
+        "tag": "doh",
         "server": "1.1.1.1",
         "path": "/dns-query"
       }
     ],
-    "final": "doh-cf",
+    "final": "doh",
     "strategy": "prefer_ipv4"
   },
   "inbounds": [
     {
       "type": "tun",
       "tag": "tun-in",
+      "interface_name": "WarpCord",
       "address": [
         "172.19.0.1/30"
       ],
@@ -42,7 +43,7 @@
       "address": [
         "172.16.0.2/32"
       ],
-      "private_key": "REPLACE_WITH_YOUR_WARP_PRIVATE_KEY_BASE64",
+      "private_key": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
       "mtu": 1280,
       "peers": [
         {
@@ -55,8 +56,7 @@
             0
           ],
           "allowed_ips": [
-            "0.0.0.0/0",
-            "::/0"
+            "0.0.0.0/0"
           ],
           "persistent_keepalive_interval": 25
         }
@@ -64,7 +64,7 @@
     }
   ],
   "route": {
-    "default_domain_resolver": "doh-cf",
+    "default_domain_resolver": "doh",
     "auto_detect_interface": true,
     "rules": [
       {
@@ -82,7 +82,10 @@
           "discordapp.net",
           "discord.media",
           "discordstatus.com",
-          "discord.co"
+          "discord.co",
+          "discordapp.io",
+          "discordsays.com",
+          "discordmerch.com"
         ],
         "outbound": "warp"
       },
@@ -93,6 +96,12 @@
           "DiscordCanary.exe",
           "DiscordDevelopment.exe",
           "Update.exe"
+        ],
+        "outbound": "warp"
+      },
+      {
+        "process_path_regex": [
+          "(?i).*[\\\\/]Discord[\\\\/].*"
         ],
         "outbound": "warp"
       }

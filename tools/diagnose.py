@@ -107,7 +107,7 @@ def main():
     print("=" * 66)
     print(" Discord network diagnosis")
     print("=" * 66)
-    print(" (!) Run this with WarpCord STOPPED (uninstall.bat) — otherwise the")
+    print(" (!) Run this with WarpCord STOPPED (kaldir.bat) — otherwise the")
     print("     tunnel is already active and the network will look clean.")
 
     sys_ips = system_dns(DOMAIN)
