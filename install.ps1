@@ -428,8 +428,14 @@ $wintunPath = Join-Path $InstallDir 'wintun.dll'
 for ($attempt = 1; $attempt -le 5; $attempt++) {
     try {
         Get-Process -Name 'sing-box', 'warp-frag' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-        Copy-Item $stagedSingBox $singBoxPath -Force -ErrorAction Stop
-        Copy-Item $stagedWintun $wintunPath -Force -ErrorAction Stop
+        # Repair runs stage the installed copy itself (see Get-SingBoxStaged /
+        # Get-WintunStaged); copying a file onto itself aborts the install.
+        if ([IO.Path]::GetFullPath($stagedSingBox) -ne [IO.Path]::GetFullPath($singBoxPath)) {
+            Copy-Item $stagedSingBox $singBoxPath -Force -ErrorAction Stop
+        }
+        if ([IO.Path]::GetFullPath($stagedWintun) -ne [IO.Path]::GetFullPath($wintunPath)) {
+            Copy-Item $stagedWintun $wintunPath -Force -ErrorAction Stop
+        }
         if ($fragOk) { Copy-Item $stagedFrag $fragPath -Force -ErrorAction Stop }
         break
     } catch {
