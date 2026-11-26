@@ -17,7 +17,7 @@ if not exist "%~dp0install.ps1" (
     exit /b 1
 )
 
-rem Double-click = 3 seconds of cat. Command-line runs skip it.
+rem Double-click = 5 seconds of cat. Command-line runs skip it.
 if "%~1"=="" (
     if exist "%~dp0tools\splash.bat" call "%~dp0tools\splash.bat"
 )

@@ -31,7 +31,7 @@ The installer knows both and picks whichever works:
 ## Quick start — one click
 
 1. Extract the archive anywhere (Desktop is fine).
-2. Double-click **`WarpCord.bat`** and accept the UAC prompt. (A double-click shows a 3-second cat greeting first; running from a command line with arguments skips it.)
+2. Double-click **`WarpCord.bat`** and accept the UAC prompt. (A double-click shows a 5-second cat greeting first; running from a command line with arguments skips it.)
 3. Wait. The installer downloads sing-box + `wintun.dll`, registers a free WARP device, probes endpoints one by one, picks the working mode, installs the scheduled tasks, and **verifies against the real Discord API**.
 4. Fully quit Discord (tray icon too) and start it again.
 
@@ -198,7 +198,7 @@ One more sanity check:
 | File | Purpose |
 |---|---|
 | `WarpCord.bat` | **One click**: install, repair, pick the mode. Self-elevates via UAC |
-| `tools/splash.bat` | The 3-second ASCII cat animation on double-click (delete it to disable) |
+| `tools/splash.bat` | The 5-second ASCII cat animation on double-click (delete it to disable) |
 | `install.ps1` | The whole installer: fetch, register, probe, install, verify, roll back on failure |
 | `durum.bat` / `status.ps1` | Live health check (no admin required) |
 | `kaldir.bat` / `uninstall.ps1` | Removes tasks, firewall rules and files; restores DNS |

@@ -31,7 +31,7 @@ Kurulum ikisini de bilir, hangisi çalışıyorsa onu seçer:
 ## Hızlı başlangıç — tek tık
 
 1. Arşivi bir klasöre çıkar (Masaüstü olabilir).
-2. **`WarpCord.bat`** dosyasına çift tıkla, UAC istemini onayla. (Çift tıkta önce 3 saniyelik kedi selamı çıkar; komut satırından argümanla çalıştırırsan atlanır.)
+2. **`WarpCord.bat`** dosyasına çift tıkla, UAC istemini onayla. (Çift tıkta önce 5 saniyelik kedi selamı çıkar; komut satırından argümanla çalıştırırsan atlanır.)
 3. Bekle. Kurulum kendi başına: sing-box + `wintun.dll` indirir, ücretsiz WARP cihazı kaydeder, uçları tek tek dener, çalışan modu seçer, görevleri kurar ve **Discord API'sine gerçek bir istekle** doğrular.
 4. Discord'u tamamen kapat (tepsi simgesinden de) ve yeniden aç.
 
@@ -198,7 +198,7 @@ Bir kontrol daha — API gateway adresini dönmeli:
 | Dosya | Görev |
 |---|---|
 | `WarpCord.bat` | **Tek tık**: kur, onar, mod seç. UAC ile kendini yükseltir |
-| `tools/splash.bat` | Çift tıkta 3 saniyelik ASCII kedi animasyonu (silersen çıkmaz) |
+| `tools/splash.bat` | Çift tıkta 5 saniyelik ASCII kedi animasyonu (silersen çıkmaz) |
 | `install.ps1` | Kurulumun tamamı: indir, kaydet, uç seç, kur, doğrula, gerekirse geri al |
 | `durum.bat` / `status.ps1` | Canlı sağlık kontrolü (yönetici gerekmez) |
 | `kaldir.bat` / `uninstall.ps1` | Görevleri, güvenlik duvarı kurallarını, dosyaları siler; DNS'i geri alır |
