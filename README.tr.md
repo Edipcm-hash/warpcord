@@ -260,6 +260,7 @@ Bir kontrol daha — API gateway adresini dönmeli:
 | `tools/warpfrag.ps1` | Proxy'yi derle/test et (`-Build`, `-Test`, `-Run`) |
 | `tools/diagnose.py` | *(isteğe bağlı, Python 3)* Ağında engelin gerçekte ne yaptığını ölçer (DNS, SNI, sertifika) |
 | `docs/config.example.json` / `docs/config.example.dpi.json` | Üretilen config'lerin şablonları |
+| `CHANGELOG.md` | Sürüm notları (v3.0.0, v2.5.0, v2.0.0) |
 
 İlk çalıştırmada sing-box (~33 MB) ve `wintun.dll` indirilir. İndirme istemiyorsan bunları `bin\sing-box.exe` ve `bin\wintun.dll` olarak koyabilirsin; kurulum önce oraya bakar.
 

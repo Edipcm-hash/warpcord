@@ -259,6 +259,7 @@ One more sanity check:
 | `tools/warpfrag/WarpFrag.cs` | DPI engine: dependency-free TLS-record-splitting local proxy |
 | `tools/warpfrag.ps1` | Build/test the proxy (`-Build`, `-Test`, `-Run`) |
 | `docs/config.example.json` / `docs/config.example.dpi.json` | Generated config shapes |
+| `CHANGELOG.md` | Release notes (v3.0.0, v2.5.0, v2.0.0) |
 | `tools/diagnose.py` | *(optional, Python 3)* Measures what *your* network is actually doing (DNS, SNI, certs) |
 
 The first run downloads sing-box (~33 MB) and `wintun.dll`. To skip the download, drop them in as `bin\sing-box.exe` and `bin\wintun.dll`; the installer checks there first.
