@@ -83,38 +83,31 @@ if ($disk -and $disk.Free -lt ($DiskGB + 10) * 1GB) { Fail "D: uzerinde yeterli 
 
 if ($CheckOnly) { Ok 'Ortam hazir gorunuyor.'; exit 0 }
 
-# --------------------------------------------------------------- answer ISO --
-function New-IsoFromFolder {
-    param([string]$Folder, [string]$IsoPath)
-    if (Test-Path $IsoPath) { Remove-Item $IsoPath -Force }
-    $fsi = New-Object -ComObject IMAPI2FS.MsftFileSystemImage
-    try {
-        $fsi.FileSystemsToCreate = 3      # ISO9660 + Joliet
-        $fsi.VolumeName = 'AUTOUNATTEND'
-        $fsi.Root.AddTree($Folder, $false)
-        $image = $fsi.CreateResultImage()
-        $stream = $image.ImageStream
-        $stream.SaveToFile($IsoPath, 0)
-    } finally {
-        [void][Runtime.InteropServices.Marshal]::ReleaseComObject($fsi)
-    }
-    return (Test-Path $IsoPath)
-}
-
+# --------------------------------------------------------------- answer VHD --
+# IMAPI2 is not scriptable on every Windows build (the image stream refuses
+# SaveToFile), so the answer file travels on a tiny FAT32 VHDX instead. Windows
+# Setup scans every attached volume for \autounattend.xml during windowsPE.
 $vmDir = Join-Path $VmRoot $VmName
-$answerDir = Join-Path $vmDir 'answer'
 $vhdPath = Join-Path $vmDir "$VmName.vhdx"
-$answerIso = Join-Path $vmDir 'autounattend.iso'
-New-Item -ItemType Directory -Force -Path $answerDir | Out-Null
-Copy-Item (Join-Path $PSScriptRoot 'autounattend.xml') (Join-Path $answerDir 'autounattend.xml') -Force
+$answerVhd = Join-Path $vmDir 'answer.vhdx'
+New-Item -ItemType Directory -Force -Path $vmDir | Out-Null
 
-Info 'Cevap dosyasi ISO olarak hazirlaniyor...'
+Info 'Cevap dosyasi VHD olarak hazirlaniyor...'
 try {
-    if (-not (New-IsoFromFolder -Folder $answerDir -IsoPath $answerIso)) { Fail 'autounattend.iso olusturulamadi.' }
+    if (Test-Path $answerVhd) { Dismount-VHD -Path $answerVhd -ErrorAction SilentlyContinue; Remove-Item $answerVhd -Force }
+    New-VHD -Path $answerVhd -SizeBytes 64MB -Dynamic | Out-Null
+    $mounted = Mount-VHD -Path $answerVhd -Passthru
+    $answerDisk = $mounted | Get-Disk
+    Initialize-Disk -Number $answerDisk.Number -PartitionStyle MBR -Confirm:$false -ErrorAction SilentlyContinue
+    $answerPart = New-Partition -DiskNumber $answerDisk.Number -UseMaximumSize -AssignDriveLetter
+    Format-Volume -Partition $answerPart -FileSystem FAT32 -NewFileSystemLabel 'AUTOUNATTEND' -Confirm:$false -Force | Out-Null
+    Copy-Item (Join-Path $PSScriptRoot 'autounattend.xml') ("{0}:\autounattend.xml" -f $answerPart.DriveLetter) -Force
+    Dismount-VHD -Path $answerVhd
 } catch {
-    Fail ("autounattend.iso olusturulamadi: {0}. oscdimg ile elle olusturun." -f $_.Exception.Message)
+    try { Dismount-VHD -Path $answerVhd -ErrorAction SilentlyContinue } catch { }
+    Fail ("Cevap VHD'si olusturulamadi: {0}" -f $_.Exception.Message)
 }
-Ok 'autounattend.iso hazir'
+Ok 'Cevap VHD hazir'
 
 # --------------------------------------------------------------------- VM ----
 $existing = Get-VM -Name $VmName -ErrorAction SilentlyContinue
@@ -130,7 +123,7 @@ Set-VMFirmware -VMName $VmName -EnableSecureBoot On -SecureBootTemplate 'Microso
 Set-VMKeyProtector -VMName $VmName -NewLocalKeyProtector
 Enable-VMTPM -VMName $VmName
 $dvd = Add-VMDvdDrive -VMName $VmName -Path $IsoPath -Passthru
-$answerDvd = Add-VMDvdDrive -VMName $VmName -Path $answerIso -Passthru
+Add-VMHardDiskDrive -VMName $VmName -Path $answerVhd -ControllerType SCSI | Out-Null
 Set-VMFirmware -VMName $VmName -FirstBootDevice $dvd
 Ok 'VM hazir (vTPM + Secure Boot acik)'
 
