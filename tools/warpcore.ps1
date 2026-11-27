@@ -6,10 +6,12 @@
 #  files as ANSI, and a Turkish "i" in a script is a very expensive bug.
 # ============================================================================
 
-$script:WarpCordVersion   = '2.0.0'
+$script:WarpCordVersion   = '2.5.0'
 $script:WarpCordStateFile = 'state.json'
 $script:WarpCordTaskName  = 'DiscordOnlyTunnel'
 $script:WarpCordFragTask  = 'WarpCordFrag'
+$script:WarpCordHealTask  = 'WarpCordHeal'
+$script:WarpCordHealEvery = 5   # minutes between guardian runs
 $script:WarpCordFirewall  = 'WarpCord'
 $script:WarpCordLegacyFirewall = 'DiscordTunnel'
 $script:WarpCordTunName   = 'WarpCord'

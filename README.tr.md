@@ -6,6 +6,8 @@ Türkçe | **[English](README.md)**
 
 > **v2 — ne değişti?** Tek tık kurulum, Python bağımlılığının kalkması, `wintun.dll` kurulumu, WARP uçlarının otomatik seçimi ve **Superonline gibi WARP'ı tamamen kapatan hatlar için DPI motoru**. Ayrıntı: [Sürüm 2](#sürüm-2--ne-değişti).
 
+> **v2.5 — koruyucu:** `WarpCordHeal` görevi tüneli 5 dakikada bir denetler, bozulan parçayı kendisi onarır ve her hatayı `C:\ProgramData\DiscordTunnel\heal.log` dosyasına yazar. Ayrıntı: [Sürüm 2.5](#sürüm-25--kendi-kendini-onaran-koruyucu).
+
 Windows 11 (build 26200) + sing-box 1.14.4 üzerinde, Discord'un ISP seviyesinde **DNS zehirlenmesi + SNI filtresi** ile engellendiği bir ağda test edildi. v2'nin DPI motoru ayrıca aynı engel profiline sahip TTNet hattında canlı olarak doğrulandı.
 
 ---
@@ -74,6 +76,26 @@ Kablolu/kablosuz ayrımı yoktur: ikisi de aynı TUN + yönlendirme yolunu kulla
 | Tüm DNS Cloudflare'e giderdi | DNS sadece gerektiğinde değiştirilir; zehirli cevaplar DoH ile tamamen devre dışı kalır |
 | `uninstall.bat` dışında kontrol yok | `durum.bat` canlı sağlık kontrolü, `kaldir.bat` temiz kaldırma |
 | Sadece AMD64 | AMD64 + ARM64, TLS 1.2 zorlaması, BOM'suz JSON, Türkçe karakterli yollar |
+
+## Sürüm 2.5 — kendi kendini onaran koruyucu
+
+v2.5 ile kurulum sadece kurmuyor, **çalışır durumda tutuyor**. Her 5 dakikada bir çalışan `WarpCordHeal` görevi tüneli denetler ve bozulan parçayı kendisi onarır:
+
+| Kontrol | Bozuksa yapılan |
+|---|---|
+| `sing-box.exe` / `wintun.dll` var mı | GitHub / wintun.net üzerinden yeniden indirilir |
+| Zamanlanmış görev var mı, etkin mi | Yeniden oluşturulur / etkinleştirilir |
+| `config.json` geçerli mi (`sing-box check`) | `account.json` + kayıtlı state'ten yeniden üretilir |
+| sing-box süreci çalışıyor mu | Tünel yeniden başlatılır (koşu başına en fazla 2 kez) |
+| TUN adaptörü ayakta mı | Yeniden başlatılır, 20 sn'ye kadar beklenir |
+| DPI modunda proxy ve portu dinliyor mu | Proxy görevi yeniden başlatılır |
+| Discord DNS'i zehirli mi | DNS 1.1.1.1'e geri alınır (yedekle) |
+| Discord API yanıt veriyor mu | Son çare tünel yeniden başlatılır |
+
+- Her kontrol, bulgu ve onarım **`C:\ProgramData\DiscordTunnel\heal.log`** dosyasına yazılır; dosya 2 MB'ı geçince `heal.log.old` olarak döner.
+- Son koşunun özeti `heal-state.json` dosyasında tutulur, `durum.bat` bunu **Onarim** satırında gösterir.
+- Elle onarım: **`onar.bat`** (veya `durum.bat -Repair`). Çıkış kodları: `0` sağlıklı, `1` onarıldı, `2` kurtarılamadı, `3` yönetici yetkisi yok.
+- Koruyucu görevi SYSTEM olarak koşar; `durum.bat` yönetici istemez ama onarım için `onar.bat` UAC ister.
 
 ## Engel gerçekte neydi
 
@@ -149,6 +171,8 @@ WarpCord.bat -KeepDns            :: sistem DNS'ine hiç dokunma
 WarpCord.bat -SkipProbe          :: uç denemesini atla, kayıtlı ucu kullan
 durum.bat                        :: canlı sağlık kontrolü
 durum.bat -Restart               :: görevleri yeniden başlat
+durum.bat -Repair                :: onarımı elle çalıştır (UAC)
+onar.bat                         :: koruyucuyu çalıştır: denetle, onar, heal.log'a yaz
 kaldir.bat                       :: her şeyi kaldır, DNS'i geri al
 ```
 
@@ -201,6 +225,7 @@ Bir kontrol daha — API gateway adresini dönmeli:
 | `tools/splash.bat` | Çift tıkta 5 saniyelik ASCII kedi animasyonu (silersen çıkmaz) |
 | `install.ps1` | Kurulumun tamamı: indir, kaydet, uç seç, kur, doğrula, gerekirse geri al |
 | `durum.bat` / `status.ps1` | Canlı sağlık kontrolü (yönetici gerekmez) |
+| `onar.bat` / `tools/warpheal.ps1` | **Koruyucu**: her 5 dakikada bir tüneli denetler, bozulanı onarır, `heal.log`'a yazar |
 | `kaldir.bat` / `uninstall.ps1` | Görevleri, güvenlik duvarı kurallarını, dosyaları siler; DNS'i geri alır |
 | `register.bat` / `tools/warp-register.ps1` | Sadece WARP kaydı + config üretimi (PowerShell) |
 | `tools/warpcore.ps1` | Motor: X25519, kayıt, uç seçimi, config üretimi, DNS yardımcıları |
@@ -211,7 +236,7 @@ Bir kontrol daha — API gateway adresini dönmeli:
 
 İlk çalıştırmada sing-box (~33 MB) ve `wintun.dll` indirilir. İndirme istemiyorsan bunları `bin\sing-box.exe` ve `bin\wintun.dll` olarak koyabilirsin; kurulum önce oraya bakar.
 
-Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasörü, iki zamanlanmış görev (`DiscordOnlyTunnel`, gerekirse `WarpCordFrag`), çıkış güvenlik duvarı izinleri ve **yalnızca DNS zehirliyse** adaptör DNS'i (yedeklenir).
+Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasörü (loglar ve `heal-state.json` dahil), zamanlanmış görevler (`DiscordOnlyTunnel`, gerekirse `WarpCordFrag`, `WarpCordHeal`), çıkış güvenlik duvarı izinleri ve **yalnızca DNS zehirliyse** adaptör DNS'i (yedeklenir).
 
 ## Sınırlar ve SSS
 
@@ -231,7 +256,7 @@ Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasör�
 
 **Ne kadar hızlı?** WARP modunda 20–100 Mbps tipik; Discord için fazlasıyla yeter, indirmeler zaten tüneli kullanmıyor. DPI modu ek gecikme olarak ~1–5 ms getirir.
 
-**Bozulursa?** `kaldir.bat` çalıştır. Görevler, güvenlik duvarı kuralları ve dosyalar silinir; DNS geri alınır; rotalar TUN cihazıyla birlikte kaybolur. Kurulum başarısız olursa da DNS otomatik geri alınır — internetin kopmaz.
+**Bozulursa?** Koruyucu genelde 5 dakika içinde kendisi düzeltir; ne yaptığını `heal.log` dosyasında görebilirsin. Hemen müdahale için `onar.bat` çalıştır. O da çözmezse `kaldir.bat` çalıştır: görevler, güvenlik duvarı kuralları ve dosyalar silinir; DNS geri alınır; rotalar TUN cihazıyla birlikte kaybolur. Kurulum başarısız olursa da DNS otomatik geri alınır — internetin kopmaz.
 
 **WARP sonradan engellenirse?** `WarpCord.bat` dosyasını yeniden çalıştır: uçları yeniden dener, olmuyorsa DPI moduna geçer. Tamamen yeni bir cihaz için `-Force`.
 

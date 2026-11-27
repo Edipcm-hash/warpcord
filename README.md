@@ -6,6 +6,8 @@
 
 > **v2 — what changed:** one-click install, the Python dependency is gone, `wintun.dll` is actually installed, WARP endpoints are auto-selected, and there is now a **DPI engine for lines that block WARP itself (Superonline)**. Details: [Version 2](#version-2--what-changed).
 
+> **v2.5 — the guardian:** a `WarpCordHeal` task checks the tunnel every 5 minutes, repairs whatever broke, and writes every error to `C:\ProgramData\DiscordTunnel\heal.log`. Details: [Version 2.5](#version-25--the-self-healing-guardian).
+
 Tested on Windows 11 (build 26200) with sing-box 1.14.4, on a network where Discord is blocked by ISP-level DNS hijacking **and** SNI filtering. The v2 DPI engine was additionally verified live on a Turkish ISP line with the same block profile.
 
 ---
@@ -74,6 +76,26 @@ Wired and wireless make no difference: both use the same TUN + routing path. Onl
 | All DNS sent to Cloudflare | DNS is changed only when needed; poisoned answers are eliminated by DoH |
 | No health check beyond uninstall | `durum.bat` live health check, `kaldir.bat` clean removal |
 | AMD64 only | AMD64 + ARM64, TLS 1.2 forced, BOM-free JSON, non-ASCII path safe |
+
+## Version 2.5 — the self-healing guardian
+
+v2.5 does not just install the tunnel, it **keeps it working**. A `WarpCordHeal` task runs every 5 minutes, checks the install and repairs whatever broke:
+
+| Check | Repair |
+|---|---|
+| `sing-box.exe` / `wintun.dll` present | Re-downloaded from GitHub / wintun.net |
+| Scheduled task exists and is enabled | Re-registered / re-enabled |
+| `config.json` valid (`sing-box check`) | Regenerated from `account.json` and the saved state |
+| sing-box process running | Tunnel restarted (max 2 restarts per run) |
+| TUN adapter up | Restarted, waits up to 20 s |
+| DPI mode: proxy running and listening | Proxy task restarted |
+| Discord DNS poisoned | DNS restored to 1.1.1.1 (with backup) |
+| Discord API answering | Last resort: tunnel restarted |
+
+- Every check, finding and repair is appended to **`C:\ProgramData\DiscordTunnel\heal.log`**; the file rotates to `heal.log.old` at 2 MB.
+- The last run is summarised in `heal-state.json` and shown by `durum.bat` in its **Onarim** row.
+- Manual repair: **`onar.bat`** (or `durum.bat -Repair`). Exit codes: `0` healthy, `1` repaired, `2` unrecoverable, `3` no administrator rights.
+- The guardian task runs as SYSTEM; `durum.bat` stays read-only, `onar.bat` asks for UAC.
 
 ## What the block actually was
 
@@ -149,6 +171,8 @@ WarpCord.bat -KeepDns            :: never touch system DNS
 WarpCord.bat -SkipProbe          :: skip probing, reuse the recorded endpoint
 durum.bat                        :: live health check
 durum.bat -Restart               :: restart the scheduled tasks
+durum.bat -Repair                :: run the repair pass by hand (UAC)
+onar.bat                         :: run the guardian: check, repair, write heal.log
 kaldir.bat                       :: remove everything and restore DNS
 ```
 
@@ -201,6 +225,7 @@ One more sanity check:
 | `tools/splash.bat` | The 5-second ASCII cat animation on double-click (delete it to disable) |
 | `install.ps1` | The whole installer: fetch, register, probe, install, verify, roll back on failure |
 | `durum.bat` / `status.ps1` | Live health check (no admin required) |
+| `onar.bat` / `tools/warpheal.ps1` | **Guardian**: checks the tunnel every 5 minutes, repairs what broke, writes `heal.log` |
 | `kaldir.bat` / `uninstall.ps1` | Removes tasks, firewall rules and files; restores DNS |
 | `register.bat` / `tools/warp-register.ps1` | WARP registration + config generation only (PowerShell) |
 | `tools/warpcore.ps1` | Engine: X25519, registration, endpoint probing, config builders, DNS helpers |
@@ -211,7 +236,7 @@ One more sanity check:
 
 The first run downloads sing-box (~33 MB) and `wintun.dll`. To skip the download, drop them in as `bin\sing-box.exe` and `bin\wintun.dll`; the installer checks there first.
 
-What the installer touches: `C:\ProgramData\DiscordTunnel`, two scheduled tasks (`DiscordOnlyTunnel`, plus `WarpCordFrag` in DPI mode), outbound firewall allow rules, and **only if DNS is poisoned** the adapter DNS (with a backup).
+What the installer touches: `C:\ProgramData\DiscordTunnel` (logs and `heal-state.json` included), the scheduled tasks (`DiscordOnlyTunnel`, `WarpCordFrag` in DPI mode, `WarpCordHeal`), outbound firewall allow rules, and **only if DNS is poisoned** the adapter DNS (with a backup).
 
 ## Limits & FAQ
 
@@ -231,7 +256,7 @@ What the installer touches: `C:\ProgramData\DiscordTunnel`, two scheduled tasks 
 
 **How fast is it?** WARP-dependent, typically 20–100 Mbps. Fine for Discord, not for downloads (which don't use it). DPI mode adds ~1–5 ms.
 
-**What if it breaks?** Run `kaldir.bat`. The tasks, firewall rules and files are removed, DNS is restored, and the routes disappear with the TUN device. A failed install also restores DNS automatically, so you never lose internet.
+**What if it breaks?** The guardian usually fixes it within 5 minutes; check `heal.log` to see what it did. Run `onar.bat` for an immediate repair pass. If that does not help, run `kaldir.bat`: the tasks, firewall rules and files are removed, DNS is restored, and the routes disappear with the TUN device. A failed install also restores DNS automatically, so you never lose internet.
 
 **What if WARP gets blocked later?** Re-run `WarpCord.bat`: it re-probes endpoints and falls back to DPI mode if needed. Use `-Force` for a brand-new device.
 

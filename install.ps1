@@ -58,7 +58,7 @@ $stagingDir = $null
 $changedDns = $false
 # ------------------------------------------------------------- functions --
 function Stop-WarpRuntime {
-    foreach ($task in @($script:WarpCordTaskName, $script:WarpCordFragTask)) {
+    foreach ($task in @($script:WarpCordTaskName, $script:WarpCordFragTask, $script:WarpCordHealTask)) {
         try { Stop-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue } catch { }
         try { Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue } catch { }
     }
@@ -467,7 +467,7 @@ foreach ($logCandidate in @($tunnelLog, (Join-Path $InstallDir 'frag.log'))) {
     }
 }
 
-foreach ($task in @($script:WarpCordTaskName, $script:WarpCordFragTask)) {
+foreach ($task in @($script:WarpCordTaskName, $script:WarpCordFragTask, $script:WarpCordHealTask)) {
     try { Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue } catch { }
 }
 & netsh advfirewall firewall delete rule name="$($script:WarpCordLegacyFirewall)" 2>&1 | Out-Null
@@ -531,13 +531,16 @@ if ($chosenMode -eq 'warp' -and $selectedEndpoint) {
 $fragPortState = $null
 if ($chosenMode -eq 'dpi') { $fragPortState = $fragPort }
 $state = [ordered]@{
-    version     = $script:WarpCordVersion
-    mode        = $chosenMode
-    endpoint    = $endpointState
-    fragPort    = $fragPortState
-    changedDns  = $changedDns
-    installedAt = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-    arch        = $arch
+    version        = $script:WarpCordVersion
+    mode           = $chosenMode
+    endpoint       = $endpointState
+    fragPort       = $fragPortState
+    changedDns     = $changedDns
+    installedAt    = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+    arch           = $arch
+    repoPath       = $RepoDir
+    singBoxVersion = $SingBoxVersion
+    wintunVersion  = $WintunVersion
 }
 Save-WarpState -InstallDir $InstallDir -State $state
 
@@ -593,14 +596,49 @@ Write-WarpLog "log: tunel akisi $tunnelHits satir, direkt akis $directHits satir
 $healthy = $checks['sing-box'] -and $checks['dns'] -and $checks['api']
 if ($healthy -and $chosenMode -eq 'dpi') { $healthy = $checks['frag'] }
 
-# ----------------------------------------------------------------- report --
-Write-WarpSection 'Sonuc'
+# -------------------------------------------------------------- guardian ---
 if ($healthy) {
     $modeLabel = if ($chosenMode -eq 'warp') {
         "WARP tuneli ($($selectedEndpoint.Address):$($selectedEndpoint.Port))"
     } else {
         'DPI modu (TLS parcalama)'
     }
+
+    # ------------------------------------------------------------ guardian --
+    # v2.5: everything below runs on its own from now on. Errors are written to
+    # heal.log in the install dir and repaired without the user doing anything.
+    Write-WarpSection 'Koruyucu (otomatik onarim)'
+    $guardDir = Join-Path $InstallDir 'tools'
+    New-Item -ItemType Directory -Force -Path $guardDir | Out-Null
+    foreach ($guardFile in @('warpcore.ps1', 'warpheal.ps1')) {
+        $guardSource = Join-Path $RepoDir "tools\$guardFile"
+        if (Test-Path $guardSource) { Copy-Item $guardSource (Join-Path $guardDir $guardFile) -Force }
+    }
+    $guardScript = Join-Path $guardDir 'warpheal.ps1'
+    if (Test-Path $guardScript) {
+        try {
+            $healAction = New-ScheduledTaskAction -Execute 'powershell.exe' `
+                -Argument ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`" -Quiet -NoElevate" -f $guardScript) `
+                -WorkingDirectory $InstallDir
+            $healTrigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).AddMinutes(2)) `
+                -RepetitionInterval (New-TimeSpan -Minutes $script:WarpCordHealEvery)
+            $healPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+            $healSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+                -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
+            Register-ScheduledTask -TaskName $script:WarpCordHealTask -Action $healAction -Trigger $healTrigger `
+                -Principal $healPrincipal -Settings $healSettings `
+                -Description 'WarpCord guardian - checks and repairs the tunnel every 5 minutes' -Force | Out-Null
+            Write-WarpLog "koruyucu gorev kuruldu: $($script:WarpCordHealTask) (her $($script:WarpCordHealEvery) dakika)" 'OK'
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $guardScript -NoElevate -Quiet 2>&1 | Out-Null
+            Write-WarpLog ("koruyucu ilk kontrol: " + $(if ($LASTEXITCODE -eq 0) { 'saglikli' } else { "kod $LASTEXITCODE" })) 'INFO'
+        } catch {
+            Write-WarpLog "koruyucu gorev kurulamadi: $($_.Exception.Message)" 'WARN'
+        }
+    } else {
+        Write-WarpLog 'tools\warpheal.ps1 bulunamadi; koruyucu kurulmadi' 'WARN'
+    }
+
+    Write-WarpSection 'Sonuc'
     if ($stagingDir -and (Test-Path $stagingDir)) { Remove-Item $stagingDir -Recurse -Force -ErrorAction SilentlyContinue }
     Write-WarpLog "KURULUM BASARILI - $modeLabel" 'OK'
     Write-Host ''
@@ -608,6 +646,7 @@ if ($healthy) {
     Write-Host '  Discord uygulamasini tamamen kapatip (tepsi simgesinden de) yeniden acin.' -ForegroundColor Yellow
     Write-Host ''
     Write-Host '  Durum  : durum.bat' -ForegroundColor Gray
+    Write-Host '  Onarim : onar.bat (koruyucu her 5 dakikada bir kendisi de kontrol eder)' -ForegroundColor Gray
     Write-Host '  Kaldir : kaldir.bat' -ForegroundColor Gray
     Write-Host "  Log    : $tunnelLog" -ForegroundColor Gray
     if ($changedDns) {

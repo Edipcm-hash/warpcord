@@ -29,7 +29,7 @@ Write-Host '  W A R P C O R D   -   kaldirma' -ForegroundColor Cyan
 Write-Host ''
 
 Write-WarpSection 'Gorevler'
-foreach ($task in @($script:WarpCordFragTask, $script:WarpCordTaskName)) {
+foreach ($task in @($script:WarpCordFragTask, $script:WarpCordTaskName, $script:WarpCordHealTask)) {
     try { Stop-ScheduledTask -TaskName $task -ErrorAction SilentlyContinue } catch { }
     try { Unregister-ScheduledTask -TaskName $task -Confirm:$false -ErrorAction SilentlyContinue } catch { }
     & schtasks /end /tn "$task" 2>&1 | Out-Null
