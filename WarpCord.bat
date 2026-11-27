@@ -1,8 +1,18 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 chcp 65001 >nul
 cd /d "%~dp0"
 title WarpCord - Discord Only Tunnel
+
+rem --- v3: drop the mark-of-the-web first, so RemoteSigned / ASR rules and the
+rem     "not digitally signed" wall cannot stop the scripts we ship in this zip.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%~dp0' -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object { try { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue; if (Get-Item -LiteralPath $_.FullName -Stream Zone.Identifier -ErrorAction SilentlyContinue) { Remove-Item -LiteralPath $_.FullName -Stream Zone.Identifier -Force -ErrorAction SilentlyContinue } } catch { } }" >nul 2>&1
+
+if not exist "%~dp0app\install.ps1" (
+    echo app\install.ps1 bulunamadi. Tum dosyalari ayni klasore cikartin.
+    pause
+    exit /b 1
+)
 
 net session >nul 2>&1
 if not "%errorlevel%"=="0" (
@@ -11,26 +21,35 @@ if not "%errorlevel%"=="0" (
     exit /b
 )
 
-if not exist "%~dp0install.ps1" (
-    echo install.ps1 bulunamadi. Tum dosyalari ayni klasore cikartin.
-    pause
-    exit /b 1
-)
-
 rem Double-click = 5 seconds of cat. Command-line runs skip it.
 if "%~1"=="" (
     if exist "%~dp0tools\splash.bat" call "%~dp0tools\splash.bat"
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0install.ps1" %*
+rem --- v3: a GPO can force AllSigned/Restricted, which refuses to load .ps1 files
+rem     even with -ExecutionPolicy Bypass. Then run the same script in memory.
+set "GPO="
+for /f "delims=" %%p in ('powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-ExecutionPolicy -Scope MachinePolicy)" 2^>nul') do set "GPO=%%p"
+if /i "%GPO%"=="AllSigned" goto :inmemory
+if /i "%GPO%"=="Restricted" goto :inmemory
+
+powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0app\install.ps1" %*
+set "RC=%errorlevel%"
+goto :done
+
+:inmemory
+echo Politika betik dosyalarini engelliyor; bellek ici calistirma kullaniliyor...
+powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -Command "$s = Get-Content -Raw '%~dp0app\install.ps1'; & ([scriptblock]::Create($s)) -RepoRoot '%~dp0' %*"
 set "RC=%errorlevel%"
 
+:done
 echo.
 if "%RC%"=="0" (
     echo WarpCord calisiyor. Discord uygulamasini kapatip yeniden acin.
 ) else (
     echo Kurulum tamamlanmadi ^(kod %RC%^).
-    echo Log: C:\ProgramData\DiscordTunnel\install.log
+    echo Log  : C:\ProgramData\DiscordTunnel\install.log
+    echo Tani : tani.bat
 )
 echo.
 pause

@@ -6,6 +6,6 @@ title WarpCord - Register WARP device
 
 echo Tek seferlik WARP cihaz kaydi (Python gerekmez)...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0tools\warp-register.ps1" %*
+powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0warp-register.ps1" %*
 echo.
 pause

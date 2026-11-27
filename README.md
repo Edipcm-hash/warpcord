@@ -97,6 +97,30 @@ v2.5 does not just install the tunnel, it **keeps it working**. A `WarpCordHeal`
 - Manual repair: **`onar.bat`** (or `durum.bat -Repair`). Exit codes: `0` healthy, `1` repaired, `2` unrecoverable, `3` no administrator rights.
 - The guardian task runs as SYSTEM; `durum.bat` stays read-only, `onar.bat` asks for UAC.
 
+## Version 3.0 — one click on a clean Windows 11
+
+On a stock Windows 11 it was not the WarpCord code that failed: it was Windows' own protections. Measured blockers and the v3 answer:
+
+| Blocker | What it does | v3 fix |
+|---|---|---|
+| **MOTW + RemoteSigned** | A `.ps1` extracted from the zip is never loaded: "not digitally signed" | `WarpCord.bat` strips the `Zone.Identifier` stream and calls `Unblock-File` for every file; the scripts also clean their own folder |
+| **GPO: AllSigned / Restricted** | Even `-ExecutionPolicy Bypass` refuses to load the `.ps1` | The launcher detects it and runs the script in memory through `[scriptblock]::Create` (with `-RepoRoot`) |
+| **SmartScreen** | "Windows protected your PC" | Unblocking removes MOTW so the prompt never appears; without a code signature the very first download may still need one "Run anyway" |
+| **Smart App Control** | Unsigned `sing-box.exe` / `warp-frag.exe` will not start | Detected early; `tani.bat` and `install.log` state the only fix (turning SAC off is irreversible) |
+| **Defender / ASR 5BEB7EFE** | Blocks or quarantines downloaded/extracted content | MOTW cleanup + exclusions for the install/repo folders and for `sing-box.exe`, `warp-frag.exe` |
+| **Controlled Folder Access** | Blocks writes into protected folders | When CFA is on, the binaries are added to the allowed-applications list |
+| **WDAC / UMCI (user-mode)** | Unsigned scripts and binaries do not run at all | Detected with a clear message; not automatable, the policy must be removed |
+| **Proxy / TLS inspection** | The GitHub download breaks | Persistent cache (`cache\`), local `bin\` copies, and a TLS probe that names the failure |
+| **ConstrainedLanguage** | Scripts cannot run | Early detection, exit code 9 with an explanation |
+| **PSModulePath pollution** (PowerShell 7 Store install) | PS 5.1 autoloads the wrong modules; `Get-ExecutionPolicy`, Defender and task cmdlets fail with "module could not be loaded" | `PSModulePath` is reset to the canonical 5.1 paths inside the process |
+
+Also:
+
+- **`tani.bat`** measures everything (build, policy, SAC/WDAC, Defender/ASR/CFA, MOTW, proxy, DNS, GitHub TLS, tasks, logs) and **`tani.bat -Bundle`** produces a shareable zip.
+- Any failing step prints a concrete hint (`Get-WarpErrorHint`) and points at `tani.bat`.
+- `kaldir.bat` also reverts the Defender/CFA exclusions it added.
+- The repo root is now tidy: `app/`, `tools/`, `docs/`; the one-click entry point is still `WarpCord.bat`.
+
 ## What the block actually was
 
 I probed each layer separately (see `tools/diagnose.py`):
@@ -173,6 +197,8 @@ durum.bat                        :: live health check
 durum.bat -Restart               :: restart the scheduled tasks
 durum.bat -Repair                :: run the repair pass by hand (UAC)
 onar.bat                         :: run the guardian: check, repair, write heal.log
+tani.bat                         :: diagnostics: why did it fail? report + next steps
+tani.bat -Bundle                 :: bundle the report as a zip
 kaldir.bat                       :: remove everything and restore DNS
 ```
 
@@ -221,18 +247,19 @@ One more sanity check:
 
 | File | Purpose |
 |---|---|
-| `WarpCord.bat` | **One click**: install, repair, pick the mode. Self-elevates via UAC |
+| `WarpCord.bat` | **One click**: install, repair, pick the mode. Self-elevates, strips MOTW, falls back to in-memory execution |
+| `tani.bat` / `tools/tani.ps1` | **Diagnostics**: says why it failed (policy, Defender, SAC, network, logs) and writes a report |
 | `tools/splash.bat` | The 5-second ASCII cat animation on double-click (delete it to disable) |
-| `install.ps1` | The whole installer: fetch, register, probe, install, verify, roll back on failure |
-| `durum.bat` / `status.ps1` | Live health check (no admin required) |
+| `app/install.ps1` | The whole installer: fetch, register, probe, install, verify, roll back on failure |
+| `durum.bat` / `app/status.ps1` | Live health check (no admin required) |
 | `onar.bat` / `tools/warpheal.ps1` | **Guardian**: checks the tunnel every 5 minutes, repairs what broke, writes `heal.log` |
-| `kaldir.bat` / `uninstall.ps1` | Removes tasks, firewall rules and files; restores DNS |
-| `register.bat` / `tools/warp-register.ps1` | WARP registration + config generation only (PowerShell) |
-| `tools/warpcore.ps1` | Engine: X25519, registration, endpoint probing, config builders, DNS helpers |
+| `kaldir.bat` / `app/uninstall.ps1` | Removes tasks, firewall rules and files; restores DNS and Defender exclusions |
+| `tools/register.bat` / `tools/warp-register.ps1` | WARP registration + config generation only (PowerShell) |
+| `tools/warpcore.ps1` | Engine: X25519, registration, endpoint probing, config builders, DNS helpers, host hardening |
 | `tools/warpfrag/WarpFrag.cs` | DPI engine: dependency-free TLS-record-splitting local proxy |
 | `tools/warpfrag.ps1` | Build/test the proxy (`-Build`, `-Test`, `-Run`) |
+| `docs/config.example.json` / `docs/config.example.dpi.json` | Generated config shapes |
 | `tools/diagnose.py` | *(optional, Python 3)* Measures what *your* network is actually doing (DNS, SNI, certs) |
-| `config.example.json` / `config.example.dpi.json` | Generated config shapes |
 
 The first run downloads sing-box (~33 MB) and `wintun.dll`. To skip the download, drop them in as `bin\sing-box.exe` and `bin\wintun.dll`; the installer checks there first.
 

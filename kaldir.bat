@@ -11,6 +11,6 @@ if not "%errorlevel%"=="0" (
     exit /b
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0uninstall.ps1" %*
+powershell -NoProfile -ExecutionPolicy Bypass -NoLogo -File "%~dp0app\uninstall.ps1" %*
 echo.
 pause

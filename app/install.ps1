@@ -16,11 +16,21 @@ param(
     [switch]$KeepDns,
     [string]$SingBoxVersion = '1.14.4',
     [string]$WintunVersion = '0.14.1',
-    [switch]$NoElevate
+    [switch]$NoElevate,
+    [switch]$NoSecurityChanges,
+    [string]$RepoRoot = ''
 )
 
 $ErrorActionPreference = 'Continue'
-$RepoDir = $PSScriptRoot
+$RepoDir = if ($RepoRoot) { $RepoRoot.TrimEnd('\') } else { Split-Path -Parent $PSScriptRoot }
+# v3: the engine file may carry mark-of-the-web; clear it before dot-sourcing.
+if ($RepoDir -and (Test-Path $RepoDir)) {
+    try {
+        Get-ChildItem -Path $RepoDir -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object {
+            try { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue } catch { }
+        }
+    } catch { }
+}
 $InstallDir = 'C:\ProgramData\DiscordTunnel'
 . (Join-Path $RepoDir 'tools\warpcore.ps1')
 
@@ -53,6 +63,25 @@ Initialize-WarpTls
 if (-not (Test-Path $InstallDir)) { New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null }
 Initialize-WarpLog -Path (Join-Path $InstallDir 'install.log') -Title 'WarpCord install'
 
+# --------------------------------------------------- host hardening (v3) --
+# Actions run here (before any download) but the report is printed after the
+# banner, so the console still opens with the product header.
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue } catch { }
+$script:HostTrust = @()
+$posture = Get-WarpSecurityPosture
+if ($posture.LanguageMode -ne 'FullLanguage') {
+    Write-WarpLog 'PowerShell kisitli dil modunda (ConstrainedLanguage): betikler calismaz.' 'ERROR'
+    Write-WarpLog 'Ipucu: WDAC/AppLocker politikasini kaldirin veya tam yetkili bir hesapta calistirin.' 'WARN'
+    exit 9
+}
+$motw = Clear-WarpMotw -Path $RepoDir
+$trust = [pscustomobject]@{ Applied = @(); Failed = @(); Reason = '' }
+if (-not $NoSecurityChanges) {
+    $trust = Set-WarpHostTrust -Paths @($RepoDir, $InstallDir) -Processes @('sing-box.exe', 'warp-frag.exe')
+    $script:HostTrust = @($trust.Applied)
+}
+$script:HostReport = [pscustomobject]@{ Posture = $posture; Motw = $motw; Trust = $trust }
+
 $script:RuntimeStopped = $false
 $stagingDir = $null
 $changedDns = $false
@@ -69,7 +98,12 @@ function Stop-WarpRuntime {
 
 function Exit-WarpFail {
     param([int]$Code, [string]$Message = '')
-    if ($Message) { Write-WarpLog $Message 'ERROR' }
+    if ($Message) {
+        Write-WarpLog $Message 'ERROR'
+        $hint = Get-WarpErrorHint -Message $Message
+        if ($hint) { Write-WarpLog "Ipucu: $hint" 'WARN' }
+        Write-WarpLog 'Ayrintili tani icin: tani.bat' 'INFO'
+    }
     if ($script:RuntimeStopped) {
         # A stopped tunnel plus hijacked DNS would leave the PC without DNS.
         $backupPath = Join-Path $InstallDir 'dns-backup.json'
@@ -129,6 +163,7 @@ function Get-SingBoxStaged {
     param([string]$Arch, [string]$Staging)
     $candidates = @(
         (Join-Path $InstallDir 'sing-box.exe'),
+        (Join-Path (Get-WarpCacheDir $InstallDir) 'sing-box.exe'),
         (Join-Path $RepoDir 'bin\sing-box.exe'),
         (Join-Path $RepoDir 'sing-box.exe')
     )
@@ -165,6 +200,7 @@ function Get-SingBoxStaged {
             Copy-Item $exe.FullName $target -Force
             if (Test-SingBoxBinary $target) {
                 Write-WarpLog 'sing-box indirildi' 'OK'
+                Save-WarpCache -InstallDir $InstallDir -Name 'sing-box.exe' -Source $target
                 return $target
             }
             throw 'indirilen sing-box calismiyor'
@@ -179,6 +215,8 @@ function Get-WintunStaged {
     param([string]$Arch, [string]$Staging)
     $installed = Join-Path $InstallDir 'wintun.dll'
     if (Test-Path $installed) { Write-WarpLog 'wintun.dll kurulu' 'OK'; return $installed }
+    $cachedDll = Join-Path (Get-WarpCacheDir $InstallDir) 'wintun.dll'
+    if (Test-Path $cachedDll) { Write-WarpLog 'wintun.dll onbellekten kullanilacak' 'OK'; return $cachedDll }
     foreach ($local in @((Join-Path $RepoDir "bin\wintun-$Arch.dll"), (Join-Path $RepoDir 'bin\wintun.dll'))) {
         if (Test-Path $local) { Write-WarpLog "wintun.dll yerel kopyadan kullanilacak: $local" 'OK'; return $local }
     }
@@ -201,6 +239,7 @@ function Get-WintunStaged {
                 $target = Join-Path $Staging 'wintun.dll'
                 Copy-Item $dll $target -Force
                 Write-WarpLog "wintun.dll indirildi ($Arch)" 'OK'
+                Save-WarpCache -InstallDir $InstallDir -Name 'wintun.dll' -Source $target
                 return $target
             }
         } catch {
@@ -239,6 +278,22 @@ Write-Host '  W A R P C O R D' -ForegroundColor Cyan
 Write-Host "  Discord-only tunnel  v$script:WarpCordVersion  -  Windows 10/11" -ForegroundColor DarkGray
 
 # ------------------------------------------------------------- preflight ---
+Write-WarpSection 'Sistem hazirligi'
+$posture = $script:HostReport.Posture
+Write-WarpLog ("PowerShell {0} | dil modu {1} | politika {2}" -f $PSVersionTable.PSVersion, $posture.LanguageMode, $posture.ExecutionPolicy) 'INFO'
+if ($posture.WdacEnforced) { Write-WarpLog 'WDAC/UMCI zorlamasi etkin: imzasiz betik ve ikililer engellenebilir.' 'WARN' }
+if ($posture.SmartAppControl -eq 'on') { Write-WarpLog 'Smart App Control acik: imzasiz sing-box/warp-frag engellenebilir (tek cozum SAC kapatmak).' 'WARN' }
+if ($posture.PolicyEnforcedByGpo) { Write-WarpLog 'ExecutionPolicy bir GPO ile zorlaniyor; Bypass calismazsa imza gerekir.' 'WARN' }
+if ($script:HostReport.Motw -gt 0) { Write-WarpLog ("{0} dosyadan internet isareti (MOTW) kaldirildi" -f $script:HostReport.Motw) 'OK' }
+Write-WarpLog ("Defender: {0} | gercek zamanli: {1} | CFA: {2}" -f $(if ($posture.DefenderPresent) { 'var' } else { 'yok' }), $posture.DefenderRealTime, $posture.ControlledFolderAccess) 'INFO'
+if (-not $NoSecurityChanges) {
+    $t = $script:HostReport.Trust
+    if ($t.Applied.Count -gt 0) { Write-WarpLog ("host guven ayarlari uygulandi ({0})" -f $t.Applied.Count) 'OK' }
+    if ($t.Failed.Count -gt 0) { Write-WarpLog ("bazi guven ayarlari uygulanamadi: {0}" -f ($t.Failed -join '; ')) 'WARN' }
+} else {
+    Write-WarpLog 'guvenlik istisnalari atlandi (-NoSecurityChanges)' 'INFO'
+}
+
 Write-WarpSection 'Sistem kontrolu'
 $arch = Get-WarpArchitecture
 Write-WarpLog "Windows $([Environment]::OSVersion.Version) - $arch - PowerShell $($PSVersionTable.PSVersion)" 'INFO'
@@ -541,6 +596,7 @@ $state = [ordered]@{
     repoPath       = $RepoDir
     singBoxVersion = $SingBoxVersion
     wintunVersion  = $WintunVersion
+    hostTrust      = @($script:HostTrust)
 }
 Save-WarpState -InstallDir $InstallDir -State $state
 

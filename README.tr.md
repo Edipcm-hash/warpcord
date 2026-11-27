@@ -97,6 +97,30 @@ v2.5 ile kurulum sadece kurmuyor, **çalışır durumda tutuyor**. Her 5 dakikad
 - Elle onarım: **`onar.bat`** (veya `durum.bat -Repair`). Çıkış kodları: `0` sağlıklı, `1` onarıldı, `2` kurtarılamadı, `3` yönetici yetkisi yok.
 - Koruyucu görevi SYSTEM olarak koşar; `durum.bat` yönetici istemez ama onarım için `onar.bat` UAC ister.
 
+## Sürüm 3.0 — temiz Windows 11'de tek tık
+
+Orijinal/temiz Windows 11'de kurulumu kıran şey WarpCord'un kodu değil, Windows'un kendi korumalarıydı. Ölçülen engeller ve v3'ün cevabı:
+
+| Engel | Ne yapıyor | v3 çözümü |
+|---|---|---|
+| **MOTW + RemoteSigned** | Zip'ten çıkan `.ps1` "not digitally signed" hatasıyla hiç yüklenmez | `WarpCord.bat` açılışta tüm dosyalardan `Zone.Identifier` akışını siler ve `Unblock-File` çalıştırır; `app/*.ps1` de kendi klasörünü temizler |
+| **GPO: AllSigned / Restricted** | `-ExecutionPolicy Bypass` bile `.ps1` dosyasını yükletmez | Launcher politikayı algılar, betiği belleğe alıp `[scriptblock]::Create` ile çalıştırır (`-RepoRoot` ile) |
+| **SmartScreen** | "Windows protected your PC" | Dosyalar unblock edildiği için MOTW kalkar; imza olmadığından ilk indirmede bir kez "Yine de çalıştır" gerekebilir |
+| **Smart App Control** | İmzasız `sing-box.exe` / `warp-frag.exe` çalışmaz | Erken tespit; `tani.bat` ve `install.log` tek çözümü söyler (SAC kapatmak geri dönüşsüzdür) |
+| **Defender / ASR 5BEB7EFE** | İndirilen/çıkarılan içeriği engeller veya karantinaya alır | MOTW temizliği + kurulum/repo klasörü ve `sing-box.exe`, `warp-frag.exe` için istisna |
+| **Controlled Folder Access** | Korumalı klasör yazımlarını engeller | CFA açıksa ikililer izin listesine eklenir |
+| **WDAC / UMCI (user-mode)** | İmzasız betik ve ikili çalışmaz | Tespit + net mesaj; otomatik aşılamaz, kullanıcı politikayı kaldırmalı |
+| **Proxy / TLS denetimi** | GitHub indirmesi kopar | Kalıcı cache (`cache\`) + `bin\` klasöründen yerel kopya + TLS probe teşhisi |
+| **ConstrainedLanguage** | Betikler hiç çalışmaz | Erken tespit, çıkış kodu 9 ve açıklama |
+| **PSModulePath kirliliği** (PowerShell 7 Store kurulumu) | PS 5.1 yanlış modülü yükler; `Get-ExecutionPolicy`, Defender ve görev cmdletleri "module could not be loaded" ile patlar | Süreç içinde `PSModulePath` kanonik 5.1 yollarına sıfırlanır |
+
+Ek olarak:
+
+- **`tani.bat`** her şeyi ölçer (sürüm, politika, SAC/WDAC, Defender/ASR/CFA, MOTW, proxy, DNS, GitHub TLS, görevler, loglar) ve **`tani.bat -Bundle`** ile paylaşılabilir zip üretir.
+- Kurulum herhangi bir adımda düşerse **ipucu** basar (`Get-WarpErrorHint`) ve `tani.bat`'a yönlendirir.
+- `kaldir.bat`, eklenen Defender/CFA istisnalarını da geri alır.
+- `app/`, `tools/`, `docs/` klasörleriyle kök dizin sadeleştirildi; tek tık girişi hâlâ `WarpCord.bat`.
+
 ## Engel gerçekte neydi
 
 Her katmanı ayrı ayrı test ettim (`tools/diagnose.py`):
@@ -173,6 +197,8 @@ durum.bat                        :: canlı sağlık kontrolü
 durum.bat -Restart               :: görevleri yeniden başlat
 durum.bat -Repair                :: onarımı elle çalıştır (UAC)
 onar.bat                         :: koruyucuyu çalıştır: denetle, onar, heal.log'a yaz
+tani.bat                         :: teşhis: neden çalışmadı? rapor + öneriler
+tani.bat -Bundle                 :: teşhis raporunu zip olarak üret
 kaldir.bat                       :: her şeyi kaldır, DNS'i geri al
 ```
 
@@ -221,18 +247,19 @@ Bir kontrol daha — API gateway adresini dönmeli:
 
 | Dosya | Görev |
 |---|---|
-| `WarpCord.bat` | **Tek tık**: kur, onar, mod seç. UAC ile kendini yükseltir |
+| `WarpCord.bat` | **Tek tık**: kur, onar, mod seç. UAC ile kendini yükseltir, MOTW temizler, gerekirse belleğe alıp çalıştırır |
+| `tani.bat` / `tools/tani.ps1` | **Tanılama**: neden çalışmadığını söyler (politika, Defender, SAC, ağ, loglar) ve rapor üretir |
 | `tools/splash.bat` | Çift tıkta 5 saniyelik ASCII kedi animasyonu (silersen çıkmaz) |
-| `install.ps1` | Kurulumun tamamı: indir, kaydet, uç seç, kur, doğrula, gerekirse geri al |
-| `durum.bat` / `status.ps1` | Canlı sağlık kontrolü (yönetici gerekmez) |
+| `app/install.ps1` | Kurulumun tamamı: indir, kaydet, uç seç, kur, doğrula, gerekirse geri al |
+| `durum.bat` / `app/status.ps1` | Canlı sağlık kontrolü (yönetici gerekmez) |
 | `onar.bat` / `tools/warpheal.ps1` | **Koruyucu**: her 5 dakikada bir tüneli denetler, bozulanı onarır, `heal.log`'a yazar |
-| `kaldir.bat` / `uninstall.ps1` | Görevleri, güvenlik duvarı kurallarını, dosyaları siler; DNS'i geri alır |
-| `register.bat` / `tools/warp-register.ps1` | Sadece WARP kaydı + config üretimi (PowerShell) |
+| `kaldir.bat` / `app/uninstall.ps1` | Görevleri, güvenlik duvarı kurallarını, dosyaları siler; DNS'i ve Defender istisnalarını geri alır |
+| `tools/register.bat` / `tools/warp-register.ps1` | Sadece WARP kaydı + config üretimi (PowerShell) |
 | `tools/warpcore.ps1` | Motor: X25519, kayıt, uç seçimi, config üretimi, DNS yardımcıları |
 | `tools/warpfrag/WarpFrag.cs` | DPI motoru: TLS kayıt parçalayan yerel proxy (bağımlılıksız) |
 | `tools/warpfrag.ps1` | Proxy'yi derle/test et (`-Build`, `-Test`, `-Run`) |
 | `tools/diagnose.py` | *(isteğe bağlı, Python 3)* Ağında engelin gerçekte ne yaptığını ölçer (DNS, SNI, sertifika) |
-| `config.example.json` / `config.example.dpi.json` | Üretilen config'lerin şablonları |
+| `docs/config.example.json` / `docs/config.example.dpi.json` | Üretilen config'lerin şablonları |
 
 İlk çalıştırmada sing-box (~33 MB) ve `wintun.dll` indirilir. İndirme istemiyorsan bunları `bin\sing-box.exe` ve `bin\wintun.dll` olarak koyabilirsin; kurulum önce oraya bakar.
 

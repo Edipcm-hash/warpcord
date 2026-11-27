@@ -6,7 +6,19 @@
 #  files as ANSI, and a Turkish "i" in a script is a very expensive bug.
 # ============================================================================
 
-$script:WarpCordVersion   = '2.5.0'
+# A polluted PSModulePath (for example a PowerShell 7 Store install) makes
+# Windows PowerShell 5.1 autoload the *wrong* Microsoft.PowerShell.Security /
+# Defender / ScheduledTasks modules, and then Get-ExecutionPolicy and friends
+# fail with "module could not be loaded". Reset it for this process only.
+if ($PSVersionTable.PSVersion.Major -le 5) {
+    $env:PSModulePath = @(
+        (Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Modules'),
+        (Join-Path $env:ProgramFiles 'WindowsPowerShell\Modules'),
+        (Join-Path $env:WINDIR 'system32\WindowsPowerShell\v1.0\Modules')
+    ) -join ';'
+}
+
+$script:WarpCordVersion   = '3.0.0'
 $script:WarpCordStateFile = 'state.json'
 $script:WarpCordTaskName  = 'DiscordOnlyTunnel'
 $script:WarpCordFragTask  = 'WarpCordFrag'
@@ -121,8 +133,187 @@ function Get-WarpArchitecture {
     }
 }
 
-function Get-FreeTcpPort {
-    param([int]$Preferred = 0)
+# --------------------------------------------------- host / hardening (v3) --
+function Get-WarpSecurityPosture {
+    $posture = [ordered]@{
+        LanguageMode           = [string]$ExecutionContext.SessionState.LanguageMode
+        IsAdmin                = (Test-WarpAdmin)
+        ExecutionPolicy        = [string](Get-ExecutionPolicy -Scope LocalMachine)
+        ProcessPolicy          = [string](Get-ExecutionPolicy -Scope Process)
+        PolicyEnforcedByGpo    = (([string](Get-ExecutionPolicy -Scope MachinePolicy)) -ne 'Undefined') -or (([string](Get-ExecutionPolicy -Scope UserPolicy)) -ne 'Undefined')
+        DefenderPresent        = $false
+        DefenderRealTime       = $false
+        DefenderTamper         = $false
+        AsrEnabledIds          = @()
+        ControlledFolderAccess = -1
+        SmartAppControl        = 'unknown'
+        WdacEnforced           = $false
+    }
+    try {
+        $mp = Get-MpComputerStatus -ErrorAction Stop
+        $posture.DefenderPresent = $true
+        $posture.DefenderRealTime = [bool]$mp.RealTimeProtectionEnabled
+        $posture.DefenderTamper = [bool]$mp.IsTamperProtected
+        $pref = Get-MpPreference -ErrorAction SilentlyContinue
+        if ($pref) {
+            $ids = @($pref.AttackSurfaceReductionRules_Ids)
+            $actions = @($pref.AttackSurfaceReductionRules_Actions)
+            $enabled = @()
+            for ($i = 0; $i -lt $ids.Count; $i++) {
+                if ($i -lt $actions.Count -and [string]$actions[$i] -eq '1') { $enabled += [string]$ids[$i] }
+            }
+            $posture.AsrEnabledIds = $enabled
+            $posture.ControlledFolderAccess = [int]$pref.EnableControlledFolderAccess
+        }
+    } catch { }
+    try {
+        $sac = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -Name 'VerifiedAndReputablePolicyState' -ErrorAction SilentlyContinue).VerifiedAndReputablePolicyState
+        if ($null -ne $sac) {
+            $posture.SmartAppControl = switch ([int]$sac) { 0 { 'off' } 1 { 'on' } 2 { 'evaluation' } default { 'unknown' } }
+        }
+    } catch { }
+    try {
+        $dg = Get-CimInstance -Namespace 'root\Microsoft\Windows\DeviceGuard' -ClassName Win32_DeviceGuard -ErrorAction Stop
+        # CodeIntegrityPolicyEnforcementStatus=2 is normal on any HVCI/kernel-CI
+        # machine; only the *user-mode* CI status blocks scripts and binaries.
+        $um = $dg.UsermodeCodeIntegrityPolicyEnforcementStatus
+        if ($null -ne $um) { $posture.WdacEnforced = ([int]$um -eq 2) }
+    } catch { }
+    return [pscustomobject]$posture
+}
+
+function Get-WarpMotwCount {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path $Path)) { return 0 }
+    $count = 0
+    Get-ChildItem -Path $Path -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            if (Get-Item -LiteralPath $_.FullName -Stream Zone.Identifier -ErrorAction SilentlyContinue) { $count++ }
+        } catch { }
+    }
+    return $count
+}
+
+function Clear-WarpMotw {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path $Path)) { return 0 }
+    $cleared = 0
+    Get-ChildItem -Path $Path -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            $hadMotw = [bool](Get-Item -LiteralPath $_.FullName -Stream Zone.Identifier -ErrorAction SilentlyContinue)
+            Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue
+            if (Get-Item -LiteralPath $_.FullName -Stream Zone.Identifier -ErrorAction SilentlyContinue) {
+                Remove-Item -LiteralPath $_.FullName -Stream Zone.Identifier -Force -ErrorAction SilentlyContinue
+            }
+            if ($hadMotw) { $cleared++ }
+        } catch { }
+    }
+    return $cleared
+}
+
+function Set-WarpHostTrust {
+    param([string[]]$Paths = @(), [string[]]$Processes = @())
+    $applied = New-Object System.Collections.ArrayList
+    $failed = New-Object System.Collections.ArrayList
+    try { $null = Get-MpComputerStatus -ErrorAction Stop } catch {
+        return [pscustomobject]@{ Applied = @(); Failed = @(); Reason = 'Defender yok' }
+    }
+    foreach ($p in $Paths) {
+        if (-not $p) { continue }
+        try { Add-MpPreference -ExclusionPath $p -ErrorAction Stop; [void]$applied.Add("defender-path:$p") }
+        catch { [void]$failed.Add("defender-path:$p ($($_.Exception.Message))") }
+    }
+    foreach ($proc in $Processes) {
+        if (-not $proc) { continue }
+        try { Add-MpPreference -ExclusionProcess $proc -ErrorAction Stop; [void]$applied.Add("defender-process:$proc") }
+        catch { [void]$failed.Add("defender-process:$proc ($($_.Exception.Message))") }
+    }
+    try {
+        $pref = Get-MpPreference -ErrorAction SilentlyContinue
+        if ($pref -and [int]$pref.EnableControlledFolderAccess -ne 0) {
+            foreach ($proc in $Processes) {
+                try { Add-MpPreference -ControlledFolderAccessAllowedApplications $proc -ErrorAction Stop; [void]$applied.Add("cfa-app:$proc") } catch { }
+            }
+        }
+    } catch { }
+    return [pscustomobject]@{ Applied = @($applied); Failed = @($failed); Reason = '' }
+}
+
+function Remove-WarpHostTrust {
+    param([string[]]$Paths = @(), [string[]]$Processes = @())
+    foreach ($p in $Paths) {
+        if ($p) { try { Remove-MpPreference -ExclusionPath $p -ErrorAction SilentlyContinue } catch { } }
+    }
+    foreach ($proc in $Processes) {
+        if (-not $proc) { continue }
+        try { Remove-MpPreference -ExclusionProcess $proc -ErrorAction SilentlyContinue } catch { }
+        try { Remove-MpPreference -ControlledFolderAccessAllowedApplications $proc -ErrorAction SilentlyContinue } catch { }
+    }
+}
+
+function Get-WarpErrorHint {
+    param([string]$Message)
+    $m = [string]$Message
+    if (-not $m) { return '' }
+    if ($m -match '(?i)not digitally signed|digital signature|AllSigned') {
+        return 'Betik imzasi/ExecutionPolicy engeli: WarpCord.bat kullanin (Bypass ile calisir), dosyalari sag tik > Ozellikler > Engellemeyi kaldir yapin.'
+    }
+    if ($m -match '(?i)Access is denied|Erisim engellendi|0x80070005') {
+        return 'Erisim reddedildi: yonetici hakki, antivirus/CFA veya klasor ACL. tani.bat calistirin.'
+    }
+    if ($m -match '(?i)virus|potentially unwanted|0x800700E1|0x800700E9') {
+        return 'Defender dosyayi engelledi. Kurulum klasorune istisna eklendi; surerse Windows Security > Koruma gecmisi > Izin ver.'
+    }
+    if ($m -match '(?i)Smart App Control|can.t be verified|code integrity') {
+        return 'Smart App Control / WDAC imzasiz ikiliyi engelliyor. tani.bat ciktisina bakin; SAC kapatmak geri donusu olmayan bir ayardir.'
+    }
+    if ($m -match '(?i)proxy|407|tunnel connection failed') {
+        return 'Proxy engeli: WinHTTP proxy ayarini kontrol edin; indirme olmuyorsa bin\ klasorune sing-box.exe ve wintun.dll koyun.'
+    }
+    if ($m -match '(?i)TLS|SSL|SecureChannel|trust relationship') {
+        return 'TLS engeli (kurumsal SSL denetimi olabilir): bin\ klasorune dosyalari elle koyun veya sertifika deposunu kontrol edin.'
+    }
+    if ($m -match '(?i)timeout|timed out|name resolution|Could not resolve') {
+        return 'Ag/DNS engeli: tani.bat ile DNS ve GitHub erisimini kontrol edin; gerekirse bin\ klasorune dosyalari elle koyun.'
+    }
+    return ''
+}
+
+function Test-WarpConstrainedLanguage {
+    return ([string]$ExecutionContext.SessionState.LanguageMode -ne 'FullLanguage')
+}
+
+function Get-WarpCacheDir {
+    param([string]$InstallDir)
+    if (-not $InstallDir) { return $null }
+    return (Join-Path $InstallDir 'cache')
+}
+
+function Save-WarpCache {
+    param([string]$InstallDir, [string]$Name, [string]$Source)
+    if (-not $InstallDir -or -not $Name -or -not (Test-Path $Source)) { return }
+    try {
+        $dir = Join-Path $InstallDir 'cache'
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        $dest = Join-Path $dir $Name
+        Copy-Item -LiteralPath $Source -Destination $dest -Force
+        $entry = [ordered]@{
+            file   = $Name
+            sha256 = (Get-FileHash -LiteralPath $dest -Algorithm SHA256).Hash
+            saved  = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+        }
+        $manifestPath = Join-Path $dir 'manifest.json'
+        $entries = @()
+        if (Test-Path $manifestPath) {
+            $raw = Read-WarpJsonFile $manifestPath
+            if ($raw -and $raw.entries) { $entries = @($raw.entries | Where-Object { $_.file -ne $Name }) }
+        }
+        $entries += $entry
+        Write-WarpJsonFile $manifestPath ([ordered]@{ entries = @($entries) })
+    } catch { }
+}
+
+function Get-FreeTcpPort {    param([int]$Preferred = 0)
     if ($Preferred -gt 0) {
         $listener = $null
         try {

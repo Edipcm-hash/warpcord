@@ -4,11 +4,15 @@
 # ============================================================================
 param(
     [switch]$KeepDns,
-    [switch]$NoElevate
+    [switch]$NoElevate,
+    [string]$RepoRoot = ''
 )
 
 $ErrorActionPreference = 'Continue'
-$RepoDir = $PSScriptRoot
+$RepoDir = if ($RepoRoot) { $RepoRoot.TrimEnd('\') } else { Split-Path -Parent $PSScriptRoot }
+if ($RepoDir -and (Test-Path $RepoDir)) {
+    try { Get-ChildItem -Path $RepoDir -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object { try { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue } catch { } } } catch { }
+}
 $InstallDir = 'C:\ProgramData\DiscordTunnel'
 . (Join-Path $RepoDir 'tools\warpcore.ps1')
 
@@ -38,6 +42,10 @@ foreach ($task in @($script:WarpCordFragTask, $script:WarpCordTaskName, $script:
 }
 Get-Process -Name 'sing-box', 'warp-frag' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
+
+Write-WarpSection 'Guven ayarlari'
+Remove-WarpHostTrust -Paths @($RepoDir, $InstallDir) -Processes @('sing-box.exe', 'warp-frag.exe')
+Write-WarpLog 'Defender/CFA istisnalari geri alindi' 'OK'
 
 Write-WarpSection 'Guvenlik duvari'
 & netsh advfirewall firewall delete rule name="$($script:WarpCordFirewall)" 2>&1 | Out-Null

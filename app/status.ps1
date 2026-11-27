@@ -5,11 +5,15 @@
 param(
     [switch]$Restart,
     [switch]$Repair,
-    [switch]$NoElevate
+    [switch]$NoElevate,
+    [string]$RepoRoot = ''
 )
 
 $ErrorActionPreference = 'Continue'
-$RepoDir = $PSScriptRoot
+$RepoDir = if ($RepoRoot) { $RepoRoot.TrimEnd('\') } else { Split-Path -Parent $PSScriptRoot }
+if ($RepoDir -and (Test-Path $RepoDir)) {
+    try { Get-ChildItem -Path $RepoDir -Recurse -Force -File -ErrorAction SilentlyContinue | ForEach-Object { try { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue } catch { } } } catch { }
+}
 $InstallDir = 'C:\ProgramData\DiscordTunnel'
 . (Join-Path $RepoDir 'tools\warpcore.ps1')
 
