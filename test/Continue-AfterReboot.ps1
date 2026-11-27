@@ -73,7 +73,6 @@ Log 'Hyper-V hazir.'
 # ------------------------------------------------------------- ISO download --
 $isoDir = Split-Path -Parent $IsoPath
 if (-not (Test-Path $isoDir)) { New-Item -ItemType Directory -Force -Path $isoDir | Out-Null }
-$expected = [int64]($IsoSizeGB * 1GB)
 
 function Get-RemoteSize {
     param([string]$Url)
@@ -88,8 +87,13 @@ function Get-RemoteSize {
     } catch { return -1 }
 }
 
+# The rounded GB value is only a fallback: the CDN's real Content-Length is the
+# authority, otherwise a perfectly complete ISO looks "short" and re-downloads.
+$remote = Get-RemoteSize $IsoUrl
+$expected = if ($remote -gt 0) { [int64]$remote } else { [int64]($IsoSizeGB * 1GB) }
+
 if (-not (Test-Path $IsoPath) -or (Get-Item $IsoPath).Length -lt $expected) {
-    $remote = Get-RemoteSize $IsoUrl
+    if ($remote -le 0) { $remote = $expected }
     Log ("ISO indiriliyor (uzak boyut: {0} GB)..." -f [math]::Round($remote / 1GB, 2))
     for ($attempt = 1; $attempt -le 6; $attempt++) {
         try {
