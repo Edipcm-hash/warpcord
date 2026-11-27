@@ -37,6 +37,7 @@ Temiz/orijinal Windows 11'de kurulumu kıran şey kod değil, Windows'un kendi k
 - MOTW'lu dosyalar + RemoteSigned: önce "not digitally signed", v3 sonrası kurulum başarılı.
 - `cmd` üzerinden `WarpCord.bat` (kirli PSModulePath): önce çıkış 9, düzeltme sonrası çıkış 0 ve tünel çalışıyor.
 - `sing-box` süreci öldürülünce koruyucu 25 sn içinde onardı; silinen `config.json` yeniden üretildi.
+- **VMware Workstation 26 + resmî Windows 11 Pro imajı** (varsayılan ayarlar): masaüstünden `WarpCord.bat` ile kurulum sorunsuz tamamlandı (kullanıcı testi, 2026-11-27).
 
 ### Bilinen sınırlar
 

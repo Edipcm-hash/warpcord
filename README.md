@@ -296,6 +296,16 @@ What the installer touches: `C:\ProgramData\DiscordTunnel` (logs and `heal-state
 
 ## Test note
 
+### Verification (2026-11-27)
+
+| Environment | Result |
+|---|---|
+| Windows 11 25H2 (physical dev machine) — MOTW + `RemoteSigned` + from-scratch simulation | **18/18 PASS**, one-click install ~43 s, `tani` exit 0 |
+| **VMware Workstation 26 + official Windows 11 Pro image**, default settings (no tweaks) | User test: files extracted to the desktop, `WarpCord.bat` ran, installation completed **without problems** |
+| Physical/original Windows 11 Pro (no VM, OEM drivers) | Final end-user verification still pending |
+
+The VM run used an official image with default settings, so it genuinely exercises Defender/SmartScreen and the MOTW path; the only remaining difference is the hardware/driver layer.
+
 On the development line: `discord.com` → `195.175.254.2` and `SNI=discord.com` → reset were confirmed. The WARP handshake works **partially** there: port 2408 sometimes times out while port 500 connects in 150–800 ms — which is exactly why endpoint/port auto-selection exists. However, the test machine has IPv6 disabled (`DisabledComponents=255`), so sing-box's WireGuard endpoint cannot bind to the adapter; the installer detected that, switched to the DPI engine automatically, and the Discord API returned a real answer in ~340 ms. On a machine with IPv6 enabled the WARP path works with the same endpoint selection and verification. The TUN driver, scheduled tasks and adapter DNS need final end-user verification on a machine where the account actually holds admin rights.
 
 ## Disclaimer

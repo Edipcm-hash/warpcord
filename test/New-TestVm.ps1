@@ -29,6 +29,7 @@ param(
     [string]$SwitchName = 'Default Switch',
     [string]$GuestUser = '',
     [string]$GuestPass = '',
+    [switch]$SecureBoot,
     [switch]$CheckOnly,
     [switch]$Destroy
 )
@@ -119,7 +120,14 @@ New-VHD -Path $vhdPath -SizeBytes ($DiskGB * 1GB) -Dynamic | Out-Null
 New-VM -Name $VmName -Generation 2 -MemoryStartupBytes ($MemoryGB * 1GB) -VHDPath $vhdPath -Path $vmDir -SwitchName $SwitchName | Out-Null
 Set-VMProcessor -VMName $VmName -Count $CpuCount
 Set-VMMemory -VMName $VmName -DynamicMemoryEnabled $true -MinimumBytes 2GB -MaximumBytes ($MemoryGB * 1GB)
-Set-VMFirmware -VMName $VmName -EnableSecureBoot On -SecureBootTemplate 'MicrosoftUEFICertificateAuthority'
+if ($SecureBoot) {
+    Set-VMFirmware -VMName $VmName -EnableSecureBoot On -SecureBootTemplate 'MicrosoftWindows'
+} else {
+    # Windows 11 24H2 media is signed with the Windows UEFI CA 2023, which the
+    # host's 2011-era Secure Boot templates do not trust ('boot loader failed').
+    # The guest still gets a clean Windows; the OS itself is not modified.
+    Set-VMFirmware -VMName $VmName -EnableSecureBoot Off
+}
 Set-VMKeyProtector -VMName $VmName -NewLocalKeyProtector
 Enable-VMTPM -VMName $VmName
 $dvd = Add-VMDvdDrive -VMName $VmName -Path $IsoPath -Passthru

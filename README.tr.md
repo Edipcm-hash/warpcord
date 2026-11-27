@@ -296,6 +296,16 @@ Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasör�
 
 ## Test notu
 
+### Doğrulama (2026-11-27)
+
+| Ortam | Sonuç |
+|---|---|
+| Windows 11 25H2 (fiziksel geliştirme makinesi) — MOTW + `RemoteSigned` + sıfırdan kurulum simülasyonu | **18/18 PASS**, tek tık kurulum ~43 sn, `tani` çıkış 0 |
+| **VMware Workstation 26 + resmî Windows 11 Pro imajı**, varsayılan ayarlar (hiçbir tweak yok) | Kullanıcı testi: dosyalar masaüstüne çıkarılıp `WarpCord.bat` çalıştırıldı, kurulum **sorunsuz** tamamlandı |
+| Fiziksel/orijinal Windows 11 Pro (VM olmayan, OEM sürücülerle) | Son kullanıcı doğrulaması bekliyor |
+
+VM testi resmî imaj ve varsayılan ayarlarla yapıldığı için Defender/SmartScreen ve MOTW yolunu gerçekten sınar; kalan tek fark donanım/sürücü katmanı.
+
 Geliştirme hattında (TTNet profili) `discord.com` → `195.175.254.2` ve `SNI=discord.com` → reset doğrulandı. WARP el sıkışması bu hatta **kısmen** çalışıyor: 2408 portu bazen zaman aşımına düşerken 500 portu 150–800 ms'de bağlanıyor — uç/port otomatik seçimi tam bu yüzden var. Ancak test makinesinde IPv6 kapatıldığı için (`DisabledComponents=255`) sing-box'ın WireGuard ucu adaptör bağlamasını yapamıyor; kurulum bunu tespit edip otomatik olarak DPI motoruna geçti ve Discord API'si ~340 ms'de gerçek cevabı döndürdü. IPv6 açık bir makinede WARP yolu, aynı uç seçimi ve doğrulama ile çalışır. TUN sürücüsü, görevler ve adaptör DNS'i yönetici hakkı olan bir Windows makinesinde son kullanıcı doğrulaması ister.
 
 ## Sorumluluk reddi
