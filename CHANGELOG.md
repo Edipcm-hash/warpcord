@@ -1,6 +1,6 @@
 # Değişiklik günlüğü
 
-Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
+Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v4.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v4.0.0) · [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
 ## Arayüz 4.0 — tepsi, günlük sekmeleri, hazırlık ve uç araçları
 
