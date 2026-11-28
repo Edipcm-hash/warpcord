@@ -265,7 +265,7 @@ function Get-WarpErrorHint {
         return 'Defender dosyayi engelledi. Kurulum klasorune istisna eklendi; surerse Windows Security > Koruma gecmisi > Izin ver.'
     }
     if ($m -match '(?i)Smart App Control|can.t be verified|code integrity') {
-        return 'Smart App Control / WDAC imzasiz ikiliyi engelliyor. tani.bat ciktisina bakin; SAC kapatmak geri donusu olmayan bir ayardir.'
+        return 'Smart App Control / WDAC imzasiz ikiliyi engelliyor (WarpCord.exe veya sing-box.exe). tani.bat ciktisina bakin; SAC kapatmak geri donusu olmayan bir ayardir: Ayarlar > Gizlilik ve guvenlik > Windows Guvenligi > Uygulama ve tarayici denetimi.'
     }
     if ($m -match '(?i)proxy|407|tunnel connection failed') {
         return 'Proxy engeli: WinHTTP proxy ayarini kontrol edin; indirme olmuyorsa bin\ klasorune sing-box.exe ve wintun.dll koyun.'

@@ -79,12 +79,12 @@ namespace WarpCord
             if (snapshot != null)
             {
                 Info("kurulum", snapshot.Installed ? "var · sürüm " + snapshot.Version : "yok");
-                Info("mod", snapshot.ModeName);
-                Info("sing-box", snapshot.SingBoxRunning ? "çalışıyor · PID " + snapshot.SingBoxPid : "çalışmıyor");
+                Info("mod", snapshot.ModeName);                Info("sing-box", snapshot.SingBoxRunning ? "çalışıyor · PID " + snapshot.SingBoxPid : "çalışmıyor");
                 Info("TUN", snapshot.TunUp ? "Up" : "yukarı değil");
                 Info("DNS", snapshot.DnsText);
                 Info("Discord API", snapshot.ApiText);
                 Info("dış IP", snapshot.PublicIp ?? "—");
+                Info("SmartApp", SmartAppControl.Name(SmartAppControl.Read()));
                 Info("sonuç", snapshot.Healthy ? "sağlıklı" : "sağlıklı değil (uygulama için hata değil)");
             }
 

@@ -16,7 +16,10 @@
 param(
     [switch]$Shortcut,
     [switch]$Smoke,
-    [switch]$Clean
+    [switch]$Clean,
+    [string]$Certificate = '',
+    [string]$PfxPassword = '',
+    [string]$TimestampUrl = 'http://timestamp.digicert.com'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -98,6 +101,42 @@ Write-Host "Hazir: $exe ($size KB)"
 
 Copy-Item -LiteralPath (Join-Path $assets 'warpcord.ico') -Destination (Join-Path $dist 'warpcord.ico') -Force
 Copy-Item -LiteralPath (Join-Path $assets 'warpcord-256.png') -Destination (Join-Path $dist 'warpcord.png') -Force
+
+# --- optional Authenticode signing -------------------------------------------
+# Smart App Control (and SmartScreen) block unsigned binaries with no
+# reputation, and SAC has no per-app allowlist, so shipping to many machines
+# means signing. A CA-issued OV/EV certificate is required (self-signed is not
+# trusted); SAC does not accept ECC certificates, use RSA.
+if ($Certificate) {
+    $signTool = Get-Command 'signtool.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $signTool) {
+        $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+        if (Test-Path $kits) {
+            $signTool = Get-ChildItem -LiteralPath $kits -Recurse -Filter 'signtool.exe' -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\\x64\\' } |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1
+        }
+    }
+    if (-not $signTool) {
+        throw "signtool.exe bulunamadi. Visual Studio / Windows SDK kurun ya da 'signtool' PATH'e ekleyin."
+    }
+
+    $signArgs = @('sign', '/fd', 'SHA256', '/td', 'SHA256', '/tr', $TimestampUrl)
+    if ($Certificate -like '*.pfx') {
+        $signArgs += @('/f', $Certificate)
+        if ($PfxPassword) { $signArgs += @('/p', $PfxPassword) }
+    } else {
+        $signArgs += @('/sha1', $Certificate)
+    }
+    $signArgs += $exe
+
+    & $signTool.FullName @signArgs
+    if ($LASTEXITCODE -ne 0) { throw "Imzalama basarisiz (signtool kodu $LASTEXITCODE)" }
+
+    $sig = Get-AuthenticodeSignature -LiteralPath $exe
+    Write-Host "Imzalandi: $($sig.SignerCertificate.Subject) [$($sig.Status)]"
+}
 
 if ($Shortcut) {
     $desktop = [Environment]::GetFolderPath('Desktop')

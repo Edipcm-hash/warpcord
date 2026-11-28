@@ -30,7 +30,7 @@ namespace WarpCord
 
     internal sealed class MainWindow : Window
     {
-        private const string GuiVersion = "1.1.0";
+        private const string GuiVersion = "1.2.0";
 
         private readonly Settings _settings;
         private readonly CliOptions _cli;
@@ -46,6 +46,9 @@ namespace WarpCord
         private Border _statusPill;
         private Border _runPill;
         private Border _adminBanner;
+        private Border _sacBanner;
+        private TextBlock _sacBannerText;
+        private Button _sacHelpBtn;
         private Grid _titleBar;
         private Grid _runStepHost;
         private Grid _spinner;
@@ -185,6 +188,9 @@ namespace WarpCord
             _adminBanner = N<Border>("AdminBanner");
             _adminBannerText = N<TextBlock>("AdminBannerText");
             _adminFixBtn = N<Button>("AdminFixBtn");
+            _sacBanner = N<Border>("SacBanner");
+            _sacBannerText = N<TextBlock>("SacBannerText");
+            _sacHelpBtn = N<Button>("SacHelpBtn");
             _statusPill = N<Border>("StatusPill");
             _statusDot = N<Ellipse>("StatusDot");
             _statusText = N<TextBlock>("StatusText");
@@ -287,6 +293,7 @@ namespace WarpCord
             _repoText.Text = Paths.RepoRoot ?? (Paths.Installed ? Paths.InstallDir : "WarpCord klasörü bulunamadı");
             _versionText.Text = "arayüz " + GuiVersion;
             UpdateAdminUi();
+            UpdateSacUi();
 
             if (!_renderMode && _settings.Maximized) WindowState = WindowState.Maximized;
         }
@@ -315,6 +322,7 @@ namespace WarpCord
             _tunnelLogBtn.Click += TunnelLog_Click;
             _healLogBtn.Click += HealLog_Click;
             _adminFixBtn.Click += AdminFix_Click;
+            _sacHelpBtn.Click += SacHelp_Click;
             _minBtn.Click += Min_Click;
             _maxBtn.Click += Max_Click;
             _closeBtn.Click += Close_Click;
@@ -1224,6 +1232,33 @@ namespace WarpCord
                 _console.Write("Günlük açılamadı: " + ex.Message, Palette.Red, false);
                 SyncEmpty();
             }
+        }
+
+        private void SacHelp_Click(object sender, RoutedEventArgs e)
+        {
+            Dialogs.Info(this, "Smart App Control",
+                "Smart App Control, imzasız ve itibarı bilinmeyen uygulamaları engeller; tek tek uygulama " +
+                "izin listesi yoktur. WarpCord.exe imzasız olduğu için bu ayar açıkken hiç başlamaz, " +
+                "sing-box.exe de çalışmaz ve kurulum yarıda kalır.\n\n" +
+                "Kapatmak için:\n" +
+                "1. Ayarlar → Gizlilik ve güvenlik → Windows Güvenliği\n" +
+                "2. Uygulama ve tarayıcı denetimi → Akıllı Uygulama Denetimi\n" +
+                "3. Kapalı\n\n" +
+                "Not: Kapatmak geri alınamaz; Windows'u sıfırlamadan yeniden açılamaz.\n\n" +
+                "Kalıcı çözüm: exe'yi bir kod imzalama sertifikasıyla imzalamak — " +
+                "gui\\build.ps1 -Certificate <parmak izi veya .pfx>");
+        }
+
+        private void UpdateSacUi()
+        {
+            SacState state = SmartAppControl.Read();
+            bool blocks = SmartAppControl.Blocks(state);
+            _sacBanner.Visibility = blocks ? Visibility.Visible : Visibility.Collapsed;
+            if (!blocks) return;
+
+            _sacBannerText.Text = state == SacState.On
+                ? "Smart App Control açık: imzasız WarpCord.exe ve sing-box.exe bu makinede engellenir."
+                : "Smart App Control değerlendirme modunda: imzasız bileşenler engellenebilir.";
         }
 
         private void AdminFix_Click(object sender, RoutedEventArgs e)

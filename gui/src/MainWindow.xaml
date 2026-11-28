@@ -52,21 +52,39 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- elevation hint, hidden unless the UI is not elevated -->
-                <Border x:Name="AdminBanner" Visibility="Collapsed" CornerRadius="12" Margin="0,0,0,12"
-                        Padding="14,11" Background="#14FBBF24" BorderBrush="#38FBBF24" BorderThickness="1">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="AdminBannerText" VerticalAlignment="Center" FontSize="12.5"
-                                   TextWrapping="Wrap" Foreground="#FFF2D08A"
-                                   Text="Kurulum ve onarım için yönetici hakları gerekiyor."/>
-                        <Button x:Name="AdminFixBtn" Grid.Column="1" Style="{StaticResource GhostButton}"
-                                Content="Yönetici olarak yeniden başlat" Height="32" Margin="14,0,0,0" Padding="14,0"/>
-                    </Grid>
-                </Border>
+                <StackPanel Grid.Row="0">
+                    <!-- Smart App Control blocks unsigned binaries; hidden unless it is on -->
+                    <Border x:Name="SacBanner" Visibility="Collapsed" CornerRadius="12" Margin="0,0,0,12"
+                            Padding="14,11" Background="#14FBBF24" BorderBrush="#38FBBF24" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SacBannerText" VerticalAlignment="Center" FontSize="12.5"
+                                       TextWrapping="Wrap" Foreground="#FFF2D08A"
+                                       Text="Smart App Control açık: imzasız bileşenler bu makinede engellenir."/>
+                            <Button x:Name="SacHelpBtn" Grid.Column="1" Style="{StaticResource GhostButton}"
+                                    Content="Nasıl kapatılır?" Height="32" Margin="14,0,0,0" Padding="14,0"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- elevation hint, hidden unless the UI is not elevated -->
+                    <Border x:Name="AdminBanner" Visibility="Collapsed" CornerRadius="12" Margin="0,8,0,12"
+                            Padding="14,11" Background="#14FBBF24" BorderBrush="#38FBBF24" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="AdminBannerText" VerticalAlignment="Center" FontSize="12.5"
+                                       TextWrapping="Wrap" Foreground="#FFF2D08A"
+                                       Text="Kurulum ve onarım için yönetici hakları gerekiyor."/>
+                            <Button x:Name="AdminFixBtn" Grid.Column="1" Style="{StaticResource GhostButton}"
+                                    Content="Yönetici olarak yeniden başlat" Height="32" Margin="14,0,0,0" Padding="14,0"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>

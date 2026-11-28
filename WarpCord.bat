@@ -14,6 +14,19 @@ if not exist "%~dp0app\install.ps1" (
     exit /b 1
 )
 
+rem --- v3.1: Smart App Control blocks unsigned binaries with no reputation, so
+rem     WarpCord.exe and sing-box.exe cannot start there. Warn with the exact
+rem     fix before a 40 second install that is guaranteed to fail. The prompt is
+rem     asked once, in the unelevated parent; the elevated re-run stays quiet.
+set "SAC_MODE=prompt"
+net session >nul 2>&1
+if not errorlevel 1 set "SAC_MODE=quiet"
+if not defined WARPCORD_SAC_OK (
+    call "%~dp0tools\sac-check.bat" %SAC_MODE%
+    if errorlevel 4 exit /b 4
+    set "WARPCORD_SAC_OK=1"
+)
+
 net session >nul 2>&1
 if not "%errorlevel%"=="0" (
     echo Yonetici haklari isteniyor / requesting administrator rights...

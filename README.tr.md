@@ -152,7 +152,7 @@ Orijinal/temiz Windows 11'de kurulumu kıran şey WarpCord'un kodu değil, Windo
 | **MOTW + RemoteSigned** | Zip'ten çıkan `.ps1` "not digitally signed" hatasıyla hiç yüklenmez | `WarpCord.bat` açılışta tüm dosyalardan `Zone.Identifier` akışını siler ve `Unblock-File` çalıştırır; `app/*.ps1` de kendi klasörünü temizler |
 | **GPO: AllSigned / Restricted** | `-ExecutionPolicy Bypass` bile `.ps1` dosyasını yükletmez | Launcher politikayı algılar, betiği belleğe alıp `[scriptblock]::Create` ile çalıştırır (`-RepoRoot` ile) |
 | **SmartScreen** | "Windows protected your PC" | Dosyalar unblock edildiği için MOTW kalkar; imza olmadığından ilk indirmede bir kez "Yine de çalıştır" gerekebilir |
-| **Smart App Control** | İmzasız `sing-box.exe` / `warp-frag.exe` çalışmaz | Erken tespit; `tani.bat` ve `install.log` tek çözümü söyler (SAC kapatmak geri dönüşsüzdür) |
+| **Smart App Control** | İmzasız `WarpCord.exe`, `sing-box.exe` ve `warp-frag.exe` hiç çalışmaz (uygulama bazlı izin yok) | Erken tespit: `WarpCord.bat` açılışta uyarır, arayüz şerit gösterir; `tani.bat` ve `install.log` tek çözümü söyler (SAC kapatmak geri dönüşsüzdür) |
 | **Defender / ASR 5BEB7EFE** | İndirilen/çıkarılan içeriği engeller veya karantinaya alır | MOTW temizliği + kurulum/repo klasörü ve `sing-box.exe`, `warp-frag.exe` için istisna |
 | **Controlled Folder Access** | Korumalı klasör yazımlarını engeller | CFA açıksa ikililer izin listesine eklenir |
 | **WDAC / UMCI (user-mode)** | İmzasız betik ve ikili çalışmaz | Tespit + net mesaj; otomatik aşılamaz, kullanıcı politikayı kaldırmalı |
@@ -304,6 +304,7 @@ Bir kontrol daha — API gateway adresini dönmeli:
 | `tools/warpcore.ps1` | Motor: X25519, kayıt, uç seçimi, config üretimi, DNS yardımcıları |
 | `tools/warpfrag/WarpFrag.cs` | DPI motoru: TLS kayıt parçalayan yerel proxy (bağımlılıksız) |
 | `tools/warpfrag.ps1` | Proxy'yi derle/test et (`-Build`, `-Test`, `-Run`) |
+| `tools/sac-check.bat` / `tools/sac-state.ps1` | Smart App Control ön kontrolü: açıksa kuruluma girmeden uyarır |
 | `tools/diagnose.py` | *(isteğe bağlı, Python 3)* Ağında engelin gerçekte ne yaptığını ölçer (DNS, SNI, sertifika) |
 | `dist\WarpCord.exe` | **Masaüstü arayüzü**: canlı durum, tek düğme, renkli günlük — tek dosya, kurulum istemez |
 | `gui/` | Arayüz kaynağı: `src/*.xaml` + `src/*.cs`, `assets/warpcord.ico|png|svg`, `build.ps1` |
@@ -332,6 +333,14 @@ Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasör�
 **IPv6 kapalıysa?** Kurulum bunu anlar. Windows'ta IPv6 kapatıldığında (`DisabledComponents` / `ms_tcpip6` kapalı) sing-box'ın WireGuard ucu IPv6 soketini adaptöre bağlayamıyor ve WARP modu çalışmıyor; bu durumda araç otomatik olarak DPI motoruna geçer ve Discord yine açılır (IP gizlenmez). WARP modunu istiyorsanız IPv6'yı açıp `WarpCord.bat` dosyasını yeniden çalıştırın.
 
 **Ne kadar hızlı?** WARP modunda 20–100 Mbps tipik; Discord için fazlasıyla yeter, indirmeler zaten tüneli kullanmıyor. DPI modu ek gecikme olarak ~1–5 ms getirir.
+
+**Akıllı Uygulama Denetimi (Smart App Control) WarpCord.exe'yi engelliyor?** Windows 11'in bu ayarı açıkken imzasız ve itibarı bilinmeyen her ikili engellenir; gördüğünüz ileti şudur: *"Akıllı Uygulama Denetimi, güvenli olmayabilecek bir uygulamayı engelledi — Yayımcısı doğrulanamadığı için ... çalıştırılmasının güvenli olduğu onaylanamadı."* Tek tek uygulama izin listesi yoktur; aynı nedenle `sing-box.exe` de çalışmaz, yani bu ayar açıkken tünel kurulamaz.
+
+- Kontrol: `Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -Name VerifiedAndReputablePolicyState` → `0` kapalı, `1` açık, `2` değerlendirme.
+- Açıksa kapatın: **Ayarlar → Gizlilik ve güvenlik → Windows Güvenliği → Uygulama ve tarayıcı denetimi → Akıllı Uygulama Denetimi → Kapalı**. Uyarı: kapatmak geri alınamaz; Windows'u sıfırlamadan yeniden açılamaz.
+- Birden çok makineye dağıtıyorsanız kalıcı çözüm imzalamaktır: `gui\build.ps1 -Certificate <parmak izi|.pfx>`. Sertifika Microsoft kök programındaki bir CA'dan alınmalı (kendinden imzalı sertifika SAC'ta güvenilmez) ve SAC ECC sertifikaları kabul etmez, RSA kullanın.
+- `tools\sac-check.bat` bu kontrolü yapar; `WarpCord.bat` açılışta çağırır ve kuruluma girmeden uyarır. Arayüz de SAC açıkken üstte şerit gösterir: [görünüm](docs/ui-sac.png).
+- `WarpCord.exe`'yi tek başına masaüstüne kopyalamayın: `dist\WarpCord.exe` olarak `app\` ve `tools\` klasörlerinin yanında kalsın, yoksa betikleri bulamaz.
 
 **Bozulursa?** Koruyucu genelde 5 dakika içinde kendisi düzeltir; ne yaptığını `heal.log` dosyasında görebilirsin. Hemen müdahale için `onar.bat` çalıştır. O da çözmezse `kaldir.bat` çalıştır: görevler, güvenlik duvarı kuralları ve dosyalar silinir; DNS geri alınır; rotalar TUN cihazıyla birlikte kaybolur. Kurulum başarısız olursa da DNS otomatik geri alınır — internetin kopmaz.
 

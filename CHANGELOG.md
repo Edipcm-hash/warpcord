@@ -5,6 +5,15 @@ Bu dosya sürüm notlarının depodaki kopyasıdır. Ayrıntılı, biçimlendiri
 - [v3.0.0 — temiz Windows 11'de tek tık + tanılama](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0)
 - [v2.5.0 — kendi kendini onaran koruyucu](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 1.2 — Smart App Control uyarısı + imzalama desteği
+
+Windows 11'in **Akıllı Uygulama Denetimi** (Smart App Control) açıkken imzasız ve itibarı bilinmeyen hiçbir ikili çalışmıyor ve uygulama bazlı izin listesi yok; bu yüzden imzasız `WarpCord.exe` hiç başlamıyor, `sing-box.exe` de engelleniyor. Artık bu durum sessiz bir hata değil:
+
+- **`tools/sac-check.bat` + `tools/sac-state.ps1`**: SAC durumunu okur (`0` kapalı, `1` açık, `2` değerlendirme). `WarpCord.bat` açılışta çağırır: açıksa kuruluma girmeden uyarır, ayarın tam yolunu yazar ve **E/H** sorar (yükseltilmiş kopyada sessiz). `WARPCORD_SAC_FORCE` ile dallar test edilebilir.
+- **Arayüzde şerit**: SAC açık/değerlendirme modundaysa üstte amber uyarı ve *Nasıl kapatılır?* düğmesi; adımları ve "geri alınamaz" notunu gösterir.
+- **`gui\build.ps1 -Certificate <parmak izi|.pfx>`**: signtool ile Authenticode imzalama + zaman damgası + doğrulama. Dağıtımda tek kalıcı çözüm; sertifika Microsoft kök programındaki bir CA'dan gelmeli, ECC kabul edilmez.
+- `--smoke` çıktısına SAC durumu eklendi; `tani.bat` mesajı artık `WarpCord.exe`'yi de anıyor.
+
 ## Arayüz 1.1 — masaüstü uygulaması + kurulum yöntemi seçimi
 
 Komut satırı araçlarının üzerine, aynı motoru tek pencereden yöneten bir WPF uygulaması eklendi: `dist\WarpCord.exe`. Kurulum paketi, Python, .NET SDK ya da ek çalışma zamanı gerekmez — Windows 10/11 ile gelen .NET Framework 4.8 üzerinde çalışan tek dosyadır (~300 KB).

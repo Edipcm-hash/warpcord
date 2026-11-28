@@ -152,7 +152,7 @@ On a stock Windows 11 it was not the WarpCord code that failed: it was Windows' 
 | **MOTW + RemoteSigned** | A `.ps1` extracted from the zip is never loaded: "not digitally signed" | `WarpCord.bat` strips the `Zone.Identifier` stream and calls `Unblock-File` for every file; the scripts also clean their own folder |
 | **GPO: AllSigned / Restricted** | Even `-ExecutionPolicy Bypass` refuses to load the `.ps1` | The launcher detects it and runs the script in memory through `[scriptblock]::Create` (with `-RepoRoot`) |
 | **SmartScreen** | "Windows protected your PC" | Unblocking removes MOTW so the prompt never appears; without a code signature the very first download may still need one "Run anyway" |
-| **Smart App Control** | Unsigned `sing-box.exe` / `warp-frag.exe` will not start | Detected early; `tani.bat` and `install.log` state the only fix (turning SAC off is irreversible) |
+| **Smart App Control** | Unsigned `WarpCord.exe`, `sing-box.exe` and `warp-frag.exe` cannot start at all (no per-app allowlist) | Detected early: `WarpCord.bat` warns on start, the GUI shows a banner; `tani.bat` and `install.log` state the only fix (turning SAC off is irreversible) |
 | **Defender / ASR 5BEB7EFE** | Blocks or quarantines downloaded/extracted content | MOTW cleanup + exclusions for the install/repo folders and for `sing-box.exe`, `warp-frag.exe` |
 | **Controlled Folder Access** | Blocks writes into protected folders | When CFA is on, the binaries are added to the allowed-applications list |
 | **WDAC / UMCI (user-mode)** | Unsigned scripts and binaries do not run at all | Detected with a clear message; not automatable, the policy must be removed |
@@ -304,6 +304,7 @@ One more sanity check:
 | `tools/warpcore.ps1` | Engine: X25519, registration, endpoint probing, config builders, DNS helpers, host hardening |
 | `tools/warpfrag/WarpFrag.cs` | DPI engine: dependency-free TLS-record-splitting local proxy |
 | `tools/warpfrag.ps1` | Build/test the proxy (`-Build`, `-Test`, `-Run`) |
+| `tools/sac-check.bat` / `tools/sac-state.ps1` | Smart App Control preflight: warns before installing while it is on |
 | `docs/config.example.json` / `docs/config.example.dpi.json` | Generated config shapes |
 | `CHANGELOG.md` | Release notes (v3.0.0, v2.5.0, v2.0.0) |
 | `tools/diagnose.py` | *(optional, Python 3)* Measures what *your* network is actually doing (DNS, SNI, certs) |
@@ -316,6 +317,15 @@ The first run downloads sing-box (~33 MB) and `wintun.dll`. To skip the download
 What the installer touches: `C:\ProgramData\DiscordTunnel` (logs and `heal-state.json` included), the scheduled tasks (`DiscordOnlyTunnel`, `WarpCordFrag` in DPI mode, `WarpCordHeal`), outbound firewall allow rules, and **only if DNS is poisoned** the adapter DNS (with a backup).
 
 ## Limits & FAQ
+
+**Smart App Control blocks WarpCord.exe?** With that Windows 11 setting on, every unsigned binary without a reputation is blocked; the message is *"Smart App Control blocked an app that may be unsafe — the publisher could not be verified"*. There is no per-app allowlist, and `sing-box.exe` is blocked for the same reason, so the tunnel cannot work while it is on.
+
+- Check: `Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -Name VerifiedAndReputablePolicyState` → `0` off, `1` on, `2` evaluation.
+- If it is on, turn it off: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control → Off**. Note: this is irreversible; it cannot be re-enabled without resetting Windows.
+- Distributing to many machines? The permanent fix is signing: `gui\build.ps1 -Certificate <thumbprint|.pfx>`. The certificate must come from a CA in the Microsoft Trusted Root Program (self-signed is not trusted), and SAC does not accept ECC certificates — use RSA.
+- `tools\sac-check.bat` performs the check; `WarpCord.bat` calls it and warns before installing. The GUI shows a banner while SAC is on: [screenshot](docs/ui-sac.png).
+- Do not copy `WarpCord.exe` out on its own (for example to the Desktop): keep `dist\WarpCord.exe` next to the `app\` and `tools\` folders, otherwise it cannot find the scripts.
+
 
 **Does it work on Superonline?** That is exactly what v2 is for. `WarpCord.bat` tries WARP first; if Superonline blocks it, the installer switches to the DPI engine automatically and Discord works again. DPI mode does not hide your IP (it is a bypass, not a tunnel); WARP mode does.
 

@@ -96,7 +96,7 @@ foreach ($scope in 'MachinePolicy', 'UserPolicy', 'LocalMachine', 'CurrentUser',
 $posture = Get-WarpSecurityPosture
 if ($posture.PolicyEnforcedByGpo) { Add-Finding 'WARN' 'ExecutionPolicy bir GPO ile zorlaniyor olabilir; imzasiz betikler -File ile calismaz, -Command fallback gerekir.' }
 Item 'Smart App Control' ([string]$posture.SmartAppControl) $(if ($posture.SmartAppControl -eq 'on') { 'Red' } else { 'Green' })
-if ($posture.SmartAppControl -eq 'on') { Add-Finding 'ERROR' 'Smart App Control acik: imzasiz sing-box/warp-frag calismaz. Windows Security > App & browser control > Smart App Control kapatilmali (geri donusu yoktur).' }
+if ($posture.SmartAppControl -eq 'on') { Add-Finding 'ERROR' 'Smart App Control acik: imzasiz WarpCord.exe, sing-box ve warp-frag calismaz. Windows Security > App & browser control > Smart App Control kapatilmali (geri donusu yoktur).' }
 Item 'WDAC/UMCI zorlama' ([string]$posture.WdacEnforced) $(if ($posture.WdacEnforced) { 'Red' } else { 'Green' })
 if ($posture.WdacEnforced) { Add-Finding 'ERROR' 'WDAC/UMCI zorlamasi etkin: imzasiz betik ve ikili engellenir; tani/install calismaz.' }
 $motw = Get-WarpMotwCount -Path $RepoDir
