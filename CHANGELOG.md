@@ -1,7 +1,27 @@
 # Değişiklik günlüğü
 
-Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v4.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v4.0.0) · [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
+Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v5.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v5.0.0) · [v4.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v4.0.0) · [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 5.0 — güven, otomasyon ve tanı
+
+v5 "yeni ekran" değil, güvenilirlik sürümü: testler, CI, imza görünürlüğü, kurulum ve daha iyi tanı.
+
+- **`--selftest`**: 65 saf mantık kontrolü (JSON, sürüm, i18n, uç sıralama, gömülü motor, işlem/CLI, log). Pencere/tünel gerekmez.
+- **GitHub Actions CI**: her push/PR'da derle → selftest → smoke → artifact; `v*` etiketinde exe release'e eklenir. README'de rozet.
+- **İmza görünürlüğü**: exe'nin Authenticode durumu PE güvenlik dizininden okunur; Hakkında ve `--smoke` gösterir. `gui\build.ps1 -Certificate` ile imzalama + doğrulama hazır.
+- **Doğrulanmış güncelleme**: sürüm denetimi release asset'ini bulur, "İndir" ile indirir, GitHub SHA-256 özetiyle doğrular (kendini değiştirme yok).
+- **Bu makineye kur / kaldır**: Başlat menüsü kısayolu (yönetici gerekmez), `--install` / `--uninstall-app`; "Windows açılışında tepside başla".
+- **Ses (UDP) testi**: STUN binding isteğiyle ses yolu ölçülür (engelliyse amber).
+- **Trafik sayacı**: `experimental.clash_api` (127.0.0.1:9099) üzerinden canlı ↑/↓ bayt.
+- **Ek süreçler (deneysel)**: `install.ps1 -ExtraApps` + `extra-apps.json`; Discord dışı süreçler de tünele alınır (Gelişmiş panelde alan).
+- **Adaptör DNS'i ve IPv6** satırları; pencere boyutu workarea'ya kırpılır.
+- **Kısayollar**: F5, Ctrl+,; log sekmeleri için erişilebilirlik adları.
+- **Dokümanlar**: `docs/SIGNING.md` (ücretsiz imza yolları, maliyetler, SAC gerçeği), `docs/SAC-SAFE.md` (imzasız ikili çalıştırmayan modun tasarımı), `docs/GUI.md` (kullanıcı rehberi).
+
+### Bilinen sınırlar
+- **SAC-güvenli mod** tasarım aşamasında: uygulaması Discord kurulu + SAC açık bir test makinesi bekliyor.
+- `sing-box.exe` üçüncü taraf olduğu için imzalanamaz → SAC açıkken WARP modu, imzalı arayüze rağmen çalışmaz.
+- **Ek süreçler** ve **trafik sayacı** deneyseldir; ek süreçler yalnızca `process_name` eşleşmesiyle çalışır.
 ## Arayüz 4.0 — tepsi, günlük sekmeleri, hazırlık ve uç araçları
 
 - **Tepsi simgesi**: durum rengi (yeşil/amber/kırmızı/mavi), sağ tık menüsü (*aç / onar / çıkış*), tünel düşünce bildirim; küçültünce tepsiye iner.

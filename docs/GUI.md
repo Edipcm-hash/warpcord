@@ -31,9 +31,9 @@ Kısayollar: **F5** durumu yenile · **Ctrl+,** ayarlar.
 ![Ayarlar](ui-settings.png)
 
 - **Genel**: dil (Türkçe/İngilizce), tepsi simgesi, bildirimler, küçültünce tepsiye in, otomatik onarım, taşınabilir mod bilgisi, **bu makineye kur / kaldır**.
-- **Hazırlık**: SAC, WDAC/UMCI, Defender/ASR, CFA, politika, MOTW — kurulumu engelleyen bir şey var mı?
-- **Uçlar**: WARP adaylarını Discord API'sine gerçek istekle dener; *en iyisini kullan* / *bu ucu kullan*.
-- **Hakkında**: sürümler, imza durumu, sürüm denetimi (+ doğrulanmış indirme), tanı paketi.
+- **Hazırlık**: SAC, WDAC/UMCI, Defender/ASR, CFA, politika, MOTW — kurulumu engelleyen bir şey var mı? ![Hazırlık](ui-readiness.png)
+- **Uçlar**: WARP adaylarını Discord API'sine gerçek istekle dener; *en iyisini kullan* / *bu ucu kullan*. ![Uçlar](ui-endpoints.png)
+- **Hakkında**: sürümler, imza durumu, sürüm denetimi (+ doğrulanmış indirme), tanı paketi. ![Hakkında](ui-about.png)
 
 ## 4. Tepsi
 
