@@ -28,6 +28,7 @@ namespace WarpCord
             EndpointChecks();
             EngineChecks();
             ActionChecks();
+            HelperChecks();
             CliChecks();
             LogChecks();
             EngineSourceChecks();
@@ -96,6 +97,17 @@ namespace WarpCord
             Check("rank keeps everything", ranked.Count == 3);
         }
 
+        private static void HelperChecks()
+        {
+            Console.WriteLine("yardimcilar");
+            Check("bytes B", Prober.FormatBytes(0) == "0 B");
+            Check("bytes KB", Prober.FormatBytes(2048) == "2 KB");
+            Check("bytes MB", Prober.FormatBytes(5 * 1024 * 1024) == "5 MB");
+            Check("bytes GB", Prober.FormatBytes(3L * 1024 * 1024 * 1024) == "3 GB");
+            Check("sanitize keeps names", Actions.Sanitize("cs2.exe, notepad.exe") == "cs2.exe, notepad.exe");
+            Check("sanitize strips quotes", Actions.Sanitize("a.exe'\"&b.exe") == "a.exe&b.exe".Replace("&", ""));
+            Check("sanitize empty", Actions.Sanitize(null) == "");
+        }
         private static void EngineChecks()
         {
             Console.WriteLine("motor");

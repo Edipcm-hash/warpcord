@@ -154,6 +154,7 @@ Kurulumun sisteme dokunduğu yerler: `C:\ProgramData\DiscordTunnel` (loglar), za
 - **v2.0** — tek tık, Python'suz, uç otomatik seçimi, WARP engelliyse DPI motoru.
 - **v2.5** — koruyucu: 5 dakikada bir denetler ve onarır.
 - **v3.0** — temiz Windows 11'de tek tık: MOTW, GPO, Defender, SAC, WDAC engelleri + `tani.bat`.
+- **Arayüz 5.0** — `--selftest`, CI, imza görünürlüğü, doğrulanmış güncelleme, bu makineye kur, ses (UDP) testi, trafik sayacı, deneysel ek süreçler.
 - **Arayüz 4.0** — tepsi simgesi ve bildirimler, günlük sekmeleri, hazırlık/uç araçları, İngilizce arayüz, otomatik onarım, taşınabilir mod, tek dosya.
 
 Ayrıntılı notlar: [CHANGELOG.md](CHANGELOG.md)

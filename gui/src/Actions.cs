@@ -97,7 +97,7 @@ namespace WarpCord
         }
 
 /// <summary>Only process names and separators may reach the installer's argument list.</summary>
-        private static string Sanitize(string list)
+        internal static string Sanitize(string list)
         {
             if (string.IsNullOrEmpty(list)) return "";
             var builder = new System.Text.StringBuilder();

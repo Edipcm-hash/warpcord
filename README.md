@@ -154,6 +154,7 @@ What the installer touches: `C:\ProgramData\DiscordTunnel` (logs), scheduled tas
 - **v2.0** — one click, no Python, endpoint auto-selection, DPI engine when WARP is blocked.
 - **v2.5** — guardian: checks and repairs every 5 minutes.
 - **v3.0** — one click on a clean Windows 11: MOTW, GPO, Defender, SAC, WDAC walls + `tani.bat`.
+- **GUI 5.0** — `--selftest`, CI, signature visibility, verified update download, install on this machine, voice (UDP) probe, traffic counter, experimental extra processes.
 - **GUI 4.0** — tray icon and notifications, log tabs, readiness/endpoint tools, English UI, automatic repair, portable mode, single file.
 
 Full notes: [CHANGELOG.md](CHANGELOG.md)
