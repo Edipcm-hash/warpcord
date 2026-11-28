@@ -61,3 +61,9 @@ Sonradan **Gelişmiş → Kurulum yöntemi**'nden değiştirilir.
 | Discord açılmıyor | **Discord'u yeniden başlat** (durum çubuğu) |
 
 Daha derin: `tani.bat` (veya Ayarlar → Hakkında → **Tanı paketi**), `heal.log`, `install.log`.
+
+## 7. Dil desteği
+
+Türkçe kaynak metinler **anahtar** olarak kullanılır (İngilizce karşılıkları gui/src/Localization.cs içinde).
+Ekranda gömülü statik metinler mantıksal ağaç taramasıyla, dinamik değerler ise cümle eşlemesiyle çevrilir; çevrilmeyen bir metin Türkçe kalır, uygulama bozulmaz.
+Yeni bir dil eklemek için aynı tabloya bir sütun eklemek yeterlidir.

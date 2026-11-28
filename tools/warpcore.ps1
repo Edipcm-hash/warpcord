@@ -1111,6 +1111,53 @@ function Get-WarpFragSource {
     return $null
 }
 
+function Invoke-WarpSign {
+    param(
+        [string]$Path,
+        [string]$Certificate = $env:WARPCORD_SIGN_CERT,
+        [string]$TimestampUrl = $env:WARPCORD_SIGN_TIMESTAMP,
+        [string]$Password = $env:WARPCORD_SIGN_PASSWORD
+    )
+    if (-not $Certificate) { return $false }
+    if (-not $Path -or -not (Test-Path $Path)) { return $false }
+
+    $signTool = Get-Command 'signtool.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $signTool) {
+        $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+        if (Test-Path $kits) {
+            $signTool = Get-ChildItem -LiteralPath $kits -Recurse -Filter 'signtool.exe' -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\\x64\\' } |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1
+        }
+    }
+    if (-not $signTool) {
+        Write-WarpLog 'signtool bulunamadi; imzalama atlandi (Windows SDK gerekir)' 'WARN'
+        return $false
+    }
+
+    $arguments = @('sign', '/fd', 'SHA256')
+    if ($TimestampUrl) { $arguments += @('/td', 'SHA256', '/tr', $TimestampUrl) }
+    if ($Certificate -like '*.pfx') {
+        $arguments += @('/f', $Certificate)
+        if ($Password) { $arguments += @('/p', $Password) }
+    } else {
+        $arguments += @('/sha1', $Certificate)
+    }
+    $arguments += $Path
+
+    try {
+        & $signTool.Source @arguments | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-WarpLog ("imzalandi: " + (Split-Path -Leaf $Path)) 'OK'
+            return $true
+        }
+        Write-WarpLog ("imzalama basarisiz (kod " + $LASTEXITCODE + "): " + (Split-Path -Leaf $Path)) 'WARN'
+    } catch {
+        Write-WarpLog ("imzalama hatasi: " + $_.Exception.Message) 'WARN'
+    }
+    return $false
+}
 function Build-WarpFrag {
     param([string]$SourcePath, [string]$OutputPath)
     if (-not (Test-Path $SourcePath)) {
@@ -1121,6 +1168,9 @@ function Build-WarpFrag {
         if (Test-Path $OutputPath) { Remove-Item $OutputPath -Force -ErrorAction SilentlyContinue }
         $source = Get-Content -Path $SourcePath -Raw -ErrorAction Stop
         Add-Type -TypeDefinition $source -Language CSharp -OutputAssembly $OutputPath -OutputType ConsoleApplication -ErrorAction Stop
+        # Optional signing so Smart App Control accepts the proxy where a
+        # certificate is configured (WARPCORD_SIGN_CERT / _TIMESTAMP / _PASSWORD).
+        if ((Test-Path $OutputPath) -and $env:WARPCORD_SIGN_CERT) { [void](Invoke-WarpSign -Path $OutputPath) }
         return (Test-Path $OutputPath)
     } catch {
         Write-WarpLog "WarpFrag derlenemedi: $($_.Exception.Message)" 'ERROR'

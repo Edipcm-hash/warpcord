@@ -82,6 +82,10 @@ namespace WarpCord
             { "IPv6", "IPv6" },
             { "Ses (UDP)", "Voice (UDP)" },
             { "Trafik", "Traffic" },
+            { "Ana işlem", "Primary action" },
+            { "Kur, onar veya yeniden bağlan", "Install, repair or reconnect" },
+            { "Uç adresi", "Endpoint address" },
+            { "Ek süreçler", "Extra processes" },
             { "engelli", "blocked" },
 
             // pills and status details

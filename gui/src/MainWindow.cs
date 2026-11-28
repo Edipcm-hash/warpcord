@@ -263,6 +263,20 @@ namespace WarpCord
             System.Windows.Automation.AutomationProperties.SetName(_tabAction, L10n.T("İşlem"));
             System.Windows.Automation.AutomationProperties.SetName(_tabTunnel, L10n.T("Tünel"));
             System.Windows.Automation.AutomationProperties.SetName(_tabRepair, L10n.T("Onarım"));
+            System.Windows.Automation.AutomationProperties.SetName(_primary, L10n.T("Ana işlem"));
+            System.Windows.Automation.AutomationProperties.SetHelpText(_primary, L10n.T("Kur, onar veya yeniden bağlan"));
+            System.Windows.Automation.AutomationProperties.SetName(_statusBtn, L10n.T("Durum"));
+            System.Windows.Automation.AutomationProperties.SetName(_healBtn, L10n.T("Onar"));
+            System.Windows.Automation.AutomationProperties.SetName(_diagBtn, L10n.T("Tanı"));
+            System.Windows.Automation.AutomationProperties.SetName(_copyBtn, L10n.T("Kopyala"));
+            System.Windows.Automation.AutomationProperties.SetName(_clearBtn, L10n.T("Temizle"));
+            System.Windows.Automation.AutomationProperties.SetName(_refreshBtn, L10n.T("Şimdi yenile"));
+            System.Windows.Automation.AutomationProperties.SetName(_folderBtn, L10n.T("Klasörü aç"));
+            System.Windows.Automation.AutomationProperties.SetName(_minBtn, L10n.T("Küçült"));
+            System.Windows.Automation.AutomationProperties.SetName(_maxBtn, L10n.T("Büyüt"));
+            System.Windows.Automation.AutomationProperties.SetName(_closeBtn, L10n.T("Kapat"));
+            System.Windows.Automation.AutomationProperties.SetName(_endpoint, L10n.T("Uç adresi"));
+            System.Windows.Automation.AutomationProperties.SetName(_extraApps, L10n.T("Ek süreçler"));
             _sparkLabel = N<TextBlock>("SparkLabel");
             _tunnelLogBtn = N<Button>("TunnelLogBtn");
             _healLogBtn = N<Button>("HealLogBtn");
@@ -858,6 +872,7 @@ namespace WarpCord
             else label = L10n.T("Yeniden Bağlan");
 
             _primary.Content = label;
+            System.Windows.Automation.AutomationProperties.SetName(_primary, label);
             if (label == "Onar")
                 _primary.ToolTip = "Tüneli denetle ve bozulan parçayı onar";
             else if (label.StartsWith("Elle"))
