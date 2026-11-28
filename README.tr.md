@@ -35,6 +35,8 @@ Windows 10/11 (64-bit), yönetici hakkı ve internet yeterli. **Python ve .NET S
 
 ![Ayarlar](docs/ui-settings.png)
 
+Dil seçimi: sağ üstteki **dişli → Ayarlar → Dil** (Türkçe / İngilizce). Seçim anında uygulanır ve hatırlanır — [görünüm](docs/ui-language.png).
+
 ### İki kurulum yolu
 
 Kurulu değilken uygulama ilk açılışta bir kez sorar ve hatırlar; sonradan **Gelişmiş → Kurulum yöntemi**'nden değiştirilir:
