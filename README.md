@@ -37,9 +37,55 @@ The installer knows both and picks whichever works:
 3. Wait. The installer downloads sing-box + `wintun.dll`, registers a free WARP device, probes endpoints one by one, picks the working mode, installs the scheduled tasks, and **verifies against the real Discord API**.
 4. Fully quit Discord (tray icon too) and start it again.
 
-Check: **`durum.bat`** &nbsp;•&nbsp; Uninstall: **`kaldir.bat`**
+Check: **`durum.bat`** &nbsp;•&nbsp; Uninstall: **`kaldir.bat`** &nbsp;•&nbsp; Desktop app: **`dist\WarpCord.exe`** (same work, one window)
 
 Requirements: Windows 10/11 **64-bit** (AMD64 or ARM64), admin rights (the TUN driver needs it), internet. **No Python required.**
+
+## Desktop app — one window
+
+`dist\WarpCord.exe` drives the same engine from a single window. No installer, no extra runtime, no Python and no .NET SDK: it is one file running on .NET Framework 4.8, which ships with Windows 10/11.
+
+![WarpCord window](docs/ui-preview.png)
+
+| What it does | How |
+|---|---|
+| Live status | Mode, endpoint, TUN adapter, `sing-box`/proxy processes, last repair, DNS, Discord API latency and public IP. Process/file state refreshes every 3 s, network checks every 20 s |
+| One button | **Kur ve Bağlan** (install) when absent, **Onar** (repair) when something is broken, **Yeniden Bağlan** (reconnect) when healthy |
+| Runs the scripts | **Durum / Onar / Tanı** run `app/status.ps1`, `tools/warpheal.ps1`, `tools/tani.ps1` and stream their output into the coloured log; **İptal** kills the process tree |
+| Advanced panel | Engine choice (Auto/WARP/DPI), new WARP device, leave DNS alone, manual endpoint, uninstall |
+| Elevation | The window opens unelevated and still shows status; install/repair/uninstall relaunch an elevated copy through UAC |
+
+Other states: [problem](docs/ui-broken.png) · [not installed](docs/ui-empty.png) · [DPI engine](docs/ui-dpi.png) · [advanced panel](docs/ui-advanced.png)
+
+### Two install routes — use the app, or install by hand
+
+On a machine where WarpCord is not installed yet, the app asks once:
+
+![Install method](docs/ui-prompt.png)
+
+| Choice | What happens |
+|---|---|
+| **Uygulama ile kur** (with the app) | The install runs in this window; every step streams live and stays in the log |
+| **Elle kur (WarpCord.bat)** (by hand) | The classic `WarpCord.bat` opens in its own elevated console; the window stays open and keeps watching the status |
+
+You can change the choice later under **Gelişmiş → Kurulum yöntemi**. With "manual" selected the primary button becomes **Elle Kur (WarpCord.bat)** and a *Klasik kurulumu başlat* button appears:
+
+![Manual install selected](docs/ui-manual.png)
+
+The classic route is always there for people who never want to open the GUI: `WarpCord.bat`, `durum.bat`, `onar.bat`, `kaldir.bat`, `tani.bat`. From a command line the app can start the same thing: `WarpCord.exe --exec manual`.
+
+### Building
+
+The C# compiler that ships with Windows is enough (no `dotnet` SDK):
+
+```bat
+gui\build.ps1                    :: dist\WarpCord.exe
+gui\build.ps1 -Shortcut -Smoke   :: desktop shortcut (with the logo) + smoke test
+```
+
+- XAML is embedded as a resource and parsed **at run time**; the logo is embedded both as the exe icon (`.ico`, 16–256 px) and as PNG. The output is a single file.
+- Logo generator: `tools/make-logo.py` → `gui/assets/warpcord.ico|png|svg` (needs Pillow; only when you touch the logo).
+- The GUI's own command line: `WarpCord.exe --smoke` (self-test), `--exec status|heal|install|diagnose|uninstall` (run headless), `--render p.png --demo` (draw the window to PNG).
 
 ## Compatibility — which Windows, which connection?
 
@@ -261,6 +307,9 @@ One more sanity check:
 | `docs/config.example.json` / `docs/config.example.dpi.json` | Generated config shapes |
 | `CHANGELOG.md` | Release notes (v3.0.0, v2.5.0, v2.0.0) |
 | `tools/diagnose.py` | *(optional, Python 3)* Measures what *your* network is actually doing (DNS, SNI, certs) |
+| `dist\WarpCord.exe` | **Desktop app**: live status, one button, coloured log — one file, nothing to install |
+| `gui/` | GUI sources: `src/*.xaml` + `src/*.cs`, `assets/warpcord.ico|png|svg`, `build.ps1` |
+| `tools/make-logo.py` | Logo generator (multi-size ICO + PNG + SVG) |
 
 The first run downloads sing-box (~33 MB) and `wintun.dll`. To skip the download, drop them in as `bin\sing-box.exe` and `bin\wintun.dll`; the installer checks there first.
 

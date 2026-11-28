@@ -37,9 +37,55 @@ Kurulum ikisini de bilir, hangisi çalışıyorsa onu seçer:
 3. Bekle. Kurulum kendi başına: sing-box + `wintun.dll` indirir, ücretsiz WARP cihazı kaydeder, uçları tek tek dener, çalışan modu seçer, görevleri kurar ve **Discord API'sine gerçek bir istekle** doğrular.
 4. Discord'u tamamen kapat (tepsi simgesinden de) ve yeniden aç.
 
-Kontrol: **`durum.bat`** &nbsp;•&nbsp; Kaldırma: **`kaldir.bat`**
+Kontrol: **`durum.bat`** &nbsp;•&nbsp; Kaldırma: **`kaldir.bat`** &nbsp;•&nbsp; Arayüz: **`dist\WarpCord.exe`** (aynı işi tek pencerede yapar)
 
 Gereksinimler: Windows 10/11 **64-bit** (AMD64 veya ARM64), yönetici hakkı (TUN sürücüsü ister), internet. **Python gerekmiyor.**
+
+## Masaüstü arayüzü — tek pencere
+
+`dist\WarpCord.exe` aynı motoru tek pencereden yönetir. Kurulum paketi, ek çalışma zamanı, Python ya da .NET SDK gerekmez: Windows 10/11 ile gelen .NET Framework 4.8 üzerinde çalışan tek dosyadır.
+
+![WarpCord arayüzü](docs/ui-preview.png)
+
+| Ne yapar | Nasıl |
+|---|---|
+| Canlı durum | Mod, uç, TUN adaptörü, `sing-box`/proxy süreçleri, son onarım, DNS, Discord API gecikmesi ve dış IP. Süreç/dosya durumu 3 saniyede, ağ kontrolleri 20 saniyede bir yenilenir |
+| Tek düğme | Kurulu değilse **Kur ve Bağlan**, sorun varsa **Onar**, sağlıklıysa **Yeniden Bağlan** |
+| Betikleri çalıştırır | **Durum / Onar / Tanı** düğmeleri `app/status.ps1`, `tools/warpheal.ps1`, `tools/tani.ps1` betiklerini çalıştırır, çıktıyı renkli günlüğe akıtır; **İptal** süreç ağacını durdurur |
+| Gelişmiş panel | Motor seçimi (Otomatik/WARP/DPI), yeni WARP cihazı kaydı, DNS'e dokunmama, elle uç, kurulumu kaldırma |
+| Yönetici | Arayüz yönetici olmadan da açılır ve durumu gösterir; yalnızca kurulum/onarım/kaldırma istendiğinde UAC ile yükseltilmiş bir kopya açar |
+
+Arayüzün diğer durumları: [sorun var](docs/ui-broken.png) · [kurulu değil](docs/ui-empty.png) · [DPI motoru](docs/ui-dpi.png) · [gelişmiş panel](docs/ui-advanced.png)
+
+### İki kurulum yolu — isteyen uygulamayla, isteyen elle
+
+WarpCord kurulu değilken uygulama ilk açılışta bir kez sorar:
+
+![Kurulum yöntemi](docs/ui-prompt.png)
+
+| Seçim | Ne olur |
+|---|---|
+| **Uygulama ile kur** | Kurulum bu pencerede çalışır; adımlar canlı akar, çıktı kaydın içinde kalır |
+| **Elle kur (WarpCord.bat)** | Klasik `WarpCord.bat` ayrı bir yönetici komut penceresinde açılır; arayüz açık kalır ve durumu izlemeye devam eder |
+
+Seçim sonradan **Gelişmiş → Kurulum yöntemi**'nden değiştirilebilir. "Elle" seçiliyken ana düğme **Elle Kur (WarpCord.bat)** olur ve panelde *Klasik kurulumu başlat* düğmesi çıkar:
+
+![Elle kurulum seçili](docs/ui-manual.png)
+
+Arayüzü hiç açmadan elle kurmak isteyenler için klasik yol her zaman duruyor: `WarpCord.bat`, `durum.bat`, `onar.bat`, `kaldir.bat`, `tani.bat`. Komut satırından aynı şeyi arayüz başlatabilir: `WarpCord.exe --exec manual`.
+
+### Derleme
+
+Windows ile birlikte gelen C# derleyicisi yeterlidir (`dotnet` SDK gerekmez):
+
+```bat
+gui\build.ps1                    :: dist\WarpCord.exe
+gui\build.ps1 -Shortcut -Smoke   :: masaüstü kısayolu (logo ile) + duman testi
+```
+
+- XAML gömülü kaynak olarak **çalışma anında** ayrıştırılır; logo hem exe simgesi (`.ico`, 16–256 px) hem PNG olarak gömülüdür. Ortaya tek dosya çıkar.
+- Logo üreteci: `tools/make-logo.py` → `gui/assets/warpcord.ico|png|svg` (Pillow ister; yalnızca logoyu elden geçirirken gerekir).
+- Arayüzün kendi komut satırı: `WarpCord.exe --smoke` (kendi kendini test), `--exec status|heal|install|diagnose|uninstall` (arayüzsüz çalıştır), `--render p.png --demo` (arayüzü PNG'ye çiz).
 
 ## Uyumluluk — hangi Windows, hangi bağlantı?
 
@@ -259,6 +305,9 @@ Bir kontrol daha — API gateway adresini dönmeli:
 | `tools/warpfrag/WarpFrag.cs` | DPI motoru: TLS kayıt parçalayan yerel proxy (bağımlılıksız) |
 | `tools/warpfrag.ps1` | Proxy'yi derle/test et (`-Build`, `-Test`, `-Run`) |
 | `tools/diagnose.py` | *(isteğe bağlı, Python 3)* Ağında engelin gerçekte ne yaptığını ölçer (DNS, SNI, sertifika) |
+| `dist\WarpCord.exe` | **Masaüstü arayüzü**: canlı durum, tek düğme, renkli günlük — tek dosya, kurulum istemez |
+| `gui/` | Arayüz kaynağı: `src/*.xaml` + `src/*.cs`, `assets/warpcord.ico|png|svg`, `build.ps1` |
+| `tools/make-logo.py` | Logo üreteci (çok boyutlu ICO + PNG + SVG) |
 | `docs/config.example.json` / `docs/config.example.dpi.json` | Üretilen config'lerin şablonları |
 | `CHANGELOG.md` | Sürüm notları (v3.0.0, v2.5.0, v2.0.0) |
 

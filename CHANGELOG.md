@@ -5,6 +5,20 @@ Bu dosya sürüm notlarının depodaki kopyasıdır. Ayrıntılı, biçimlendiri
 - [v3.0.0 — temiz Windows 11'de tek tık + tanılama](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0)
 - [v2.5.0 — kendi kendini onaran koruyucu](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 1.1 — masaüstü uygulaması + kurulum yöntemi seçimi
+
+Komut satırı araçlarının üzerine, aynı motoru tek pencereden yöneten bir WPF uygulaması eklendi: `dist\WarpCord.exe`. Kurulum paketi, Python, .NET SDK ya da ek çalışma zamanı gerekmez — Windows 10/11 ile gelen .NET Framework 4.8 üzerinde çalışan tek dosyadır (~300 KB).
+
+- **Canlı durum paneli**: mod, uç, TUN adaptörü, `sing-box`/proxy süreçleri, son onarım durumu, DNS, Discord API gecikmesi ve dış IP. Süreç/dosya durumu 3 saniyede, ağ kontrolleri 20 saniyede bir yenilenir; ağ kontrolü UI'yı kilitlemez.
+- **Bağlama duyarlı tek düğme**: kurulu değilse *Kur ve Bağlan*, sorun varsa *Onar*, sağlıklıysa *Yeniden Bağlan*.
+- **Betik çıktısı pencereye akar**: Durum/Onar/Tanı düğmeleri mevcut PowerShell betiklerini çalıştırır, satır satır renklendirir (OK yeşil, hata kırmızı, adım camgöbeği, bölüm mor) ve işlem sırasında *İptal* süreç ağacını durdurur.
+- **Yönetici akışı**: arayüz yönetici olmadan açılır ve durumu gösterir; kurulum/onarım/kaldırma istendiğinde kendini `--run` ile UAC üzerinden yeniden başlatır. Tek örnek koruması, yeniden başlatma öncesi bırakılır.
+- **Gelişmiş panel**: motor seçimi (Otomatik/WARP/DPI), kurulum yöntemi (Uygulama ile / Elle), yeni WARP cihazı, DNS'e dokunmama, elle uç (biçim doğrulanır), kurulumu kaldırma (onay diyaloglu).
+- **İki kurulum yolu**: kurulu olmayan makinede ilk açılışta "Uygulama ile kur" / "Elle kur — WarpCord.bat" seçimi sorulur ve hatırlanır. "Elle" seçiliyken ana düğme **Elle Kur (WarpCord.bat)** olur, panelde *Klasik kurulumu başlat* düğmesi çıkar; `WarpCord.bat` yönetici olarak kendi konsol penceresinde açılır, arayüz açık kalıp durumu izler. Komut satırından `WarpCord.exe --exec manual` aynı işi yapar. Klasik `WarpCord.bat` / `durum.bat` / `onar.bat` / `kaldir.bat` yolu hiç değişmeden durur.
+- **Arayüz komut satırı**: `--smoke` (XAML/logo/betik/ayar + canlı durum duman testi, çıkış kodu), `--exec <işlem>` (arayüzsüz çalıştır; aynı `Runner` yolunu kullanır), `--render p.png [--demo] [--state broken|notinstalled|dpi]` (arayüzü PNG'ye çizer), `--prompt p.png` (kurulum yöntemi penceresini çizer).
+- **Logo**: portal halkası içinden geçen "W" kurdelesi. `tools/make-logo.py` her boyutu ayrı çizer (16–256 px), PNG-şıkıştırmalı çok boyutlu `.ico` ve SVG üretir; exe simgesi olarak gömülür.
+- **Derleme**: `gui\build.ps1` — yalnızca `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe` kullanır (`/noconfig`, C# 5), XAML ve görselleri gömülü kaynak yapar, `-Shortcut` ile masaüstü kısayolu, `-Smoke` ile duman testi çalıştırır.
+
 ## v3.0.0 — Temiz Windows 11'de tek tık + tanılama
 
 Temiz/orijinal Windows 11'de kurulumu kıran şey kod değil, Windows'un kendi korumalarıydı. v3 bu duvarları kaldırır ve geri kalanı için teşhis sistemi getirir.

@@ -2,3 +2,5 @@
 config.json
 bin/
 *.log
+dist/*
+!dist/WarpCord.exe
