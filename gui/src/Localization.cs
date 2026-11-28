@@ -78,6 +78,8 @@ namespace WarpCord
             { "Uç", "Endpoint" },
             { "Onarım", "Repair" },
             { "Dış IP", "Public IP" },
+            { "DNS sunucusu", "DNS server" },
+            { "IPv6", "IPv6" },
 
             // pills and status details
             { "KONTROL EDİLİYOR", "CHECKING" },

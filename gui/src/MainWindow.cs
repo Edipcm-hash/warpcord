@@ -278,6 +278,8 @@ namespace WarpCord
             AddRow("proxy", "Proxy");
             AddRow("heal", L10n.T("Onarım"));
             AddRow("dns", "DNS");
+            AddRow("adapterdns", L10n.T("DNS sunucusu"));
+            AddRow("ipv6", L10n.T("IPv6"));
             AddRow("api", "Discord API");
             AddRow("ip", L10n.T("Dış IP"));
             _statsList.ItemsSource = _rows;
@@ -292,8 +294,12 @@ namespace WarpCord
 
         private void LoadSettingsIntoUi()
         {
-            Width = Math.Max(MinWidth, _settings.Width);
-            Height = Math.Max(MinHeight, _settings.Height);
+            // never restore a window bigger than the screen it has to fit on
+            Rect work = SystemParameters.WorkArea;
+            double width = Math.Min(Math.Max(MinWidth, _settings.Width), Math.Max(MinWidth, work.Width - 40));
+            double height = Math.Min(Math.Max(MinHeight, _settings.Height), Math.Max(MinHeight, work.Height - 40));
+            Width = width;
+            Height = height;
 
             if (!_renderMode && _settings.HasBounds && IsOnScreen(_settings.Left, _settings.Top))
             {
@@ -725,6 +731,8 @@ namespace WarpCord
                 Row("proxy", "kurulu değil", Palette.Faint);
                 Row("heal", "kurulu değil", Palette.Faint);
                 Row("dns", s.DnsChecked ? s.DnsText : "—", s.DnsOk ? Palette.Green : Palette.Faint);
+                Row("adapterdns", "—", Palette.Faint);
+                Row("ipv6", s.Ipv6Enabled ? L10n.T("açık") : L10n.T("kapalı"), Palette.Faint);
                 Row("api", s.ApiChecked ? s.ApiText : "—", s.ApiOk ? Palette.Green : Palette.Faint);
                 Row("ip", string.IsNullOrEmpty(s.PublicIp) ? "—" : s.PublicIp, Palette.Faint);
                 return;
@@ -787,6 +795,11 @@ namespace WarpCord
             Row("heal", heal, healDot);
 
             Row("dns", s.DnsChecked ? s.DnsText : "—", s.DnsOk ? Palette.Green : Palette.Red);
+            string adapterDns = string.IsNullOrEmpty(s.AdapterDns) ? "—" : s.AdapterDns;
+            Row("adapterdns", adapterDns,
+                adapterDns.Contains("1.1.1.1") ? Palette.Cyan : (adapterDns == "—" ? Palette.Faint : Palette.Dim));
+            Row("ipv6", s.Ipv6Enabled ? L10n.T("açık") : L10n.T("kapalı"),
+                s.Ipv6Enabled ? Palette.Green : Palette.Amber);
             Row("api", s.ApiChecked ? s.ApiText : "—", s.ApiOk ? Palette.Green : Palette.Red);
             Row("ip", string.IsNullOrEmpty(s.PublicIp) ? "—" : s.PublicIp,
                 string.IsNullOrEmpty(s.PublicIp) ? Palette.Faint : Palette.Dim);

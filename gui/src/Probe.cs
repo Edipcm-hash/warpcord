@@ -30,6 +30,8 @@ namespace WarpCord
 
         public bool TunUp;
         public string TunName;
+        public string AdapterDns;
+        public bool Ipv6Enabled;
 
         public int TunnelHits;
         public int DirectHits;
@@ -165,6 +167,36 @@ namespace WarpCord
                 // adapter enumeration is best-effort
             }
 
+            try
+            {
+                var adapters = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                                n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                                !string.Equals(n.Name, "WarpCord", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                var primary = adapters.FirstOrDefault(n => n.GetIPProperties().GatewayAddresses.Count > 0) ??
+                              adapters.FirstOrDefault();
+                if (primary != null)
+                {
+                    var dns = primary.GetIPProperties().DnsAddresses
+                        .Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        .Select(a => a.ToString())
+                        .Take(2)
+                        .ToArray();
+                    if (dns.Length > 0) snap.AdapterDns = string.Join(", ", dns);
+                }
+
+                snap.Ipv6Enabled = System.Net.Sockets.Socket.OSSupportsIPv6 &&
+                                   NetworkInterface.GetAllNetworkInterfaces().Any(n =>
+                                       n.OperationalStatus == OperationalStatus.Up &&
+                                       n.GetIPProperties().UnicastAddresses.Any(a =>
+                                           a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
+                                           !a.Address.IsIPv6LinkLocal));
+            }
+            catch
+            {
+                // adapter details are best effort
+            }
             object heal = Json.Node(Paths.HealStatePath);
             if (heal != null)
             {
