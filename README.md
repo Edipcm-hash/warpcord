@@ -19,7 +19,7 @@ Windows 10/11 (64-bit), admin rights and internet are enough. **No Python, no .N
 
 ## Desktop app
 
-`dist\WarpCord.exe` — one file (~573 KB) with the engine inside; install, repair and status in a single window.
+`dist\WarpCord.exe` — one file (~586 KB) with the engine inside; install, repair and status in a single window.
 
 ![WarpCord window](docs/ui-preview.png)
 

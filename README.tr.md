@@ -19,7 +19,7 @@ Windows 10/11 (64-bit), yönetici hakkı ve internet yeterli. **Python ve .NET S
 
 ## Masaüstü uygulaması
 
-`dist\WarpCord.exe` — tek dosya (~573 KB), motoru içinde taşır; kurulum, onarım ve durum tek pencereden.
+`dist\WarpCord.exe` — tek dosya (~586 KB), motoru içinde taşır; kurulum, onarım ve durum tek pencereden.
 
 ![WarpCord arayüzü](docs/ui-preview.png)
 

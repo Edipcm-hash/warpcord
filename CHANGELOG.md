@@ -1,7 +1,18 @@
 # Değişiklik günlüğü
 
-Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v5.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v5.0.0) · [v4.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v4.0.0) · [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
+Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v5.1.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v5.1.0) · [v5.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v5.0.0) · [v4.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v4.0.0) · [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 5.1 — SAC-güvenli mod (deneysel), imzalama kancası
+
+- **SAC-güvenli mod (deneysel)**: imzasız ikili çalıştırmadan Discord'u açan yol. `tools/warpac.ps1` Discord'a özel bir PAC yazar, `HKCU` WinINET `AutoConfigURL`'i yedekleyip ayarlar ve parçalayıcı proxy'yi **imzalı `powershell.exe` içinde** barındırır (`tools/warphost.ps1` + `Add-Type`). sing-box, TUN ve yönetici hakkı yok; IP gizlenmez. `--sac start|status|stop` veya Ayarlar → Genel anahtarı. Doğrulanan: proxy üzerinden `/api/v9/gateway` **200**, günlükte `CONNECT discord.com:443` (DoH), kapatınca port/PAC/kayıt temiz. Discord'un PAC davranışı henüz ölçülmedi.
+- **`warp-frag.exe` imzalama kancası**: `Invoke-WarpSign`; `WARPCORD_SIGN_CERT` (+ `_TIMESTAMP`, `_PASSWORD`) tanımlıysa proxy derlenince imzalanır.
+- **Erişilebilirlik**: düğme ve alanlara `AutomationProperties` adları/yardım metinleri.
+- **`--selftest` 72 kontrol** (bayt biçimleme, komut temizleme eklendi).
+- **Düzeltme**: `ScriptHost.Run` artık arka planda kalan alt süreç yüzünden kilitlenmiyor.
+
+### Bilinen sınırlar
+- SAC-güvenli mod deneyseldir; Discord kurulu + SAC açık makinede ölçülmeli.
+- `sing-box.exe` imzalanamadığı için SAC açıkken WARP modu çalışmaz.
 ## Arayüz 5.0 — güven, otomasyon ve tanı
 
 v5 "yeni ekran" değil, güvenilirlik sürümü: testler, CI, imza görünürlüğü, kurulum ve daha iyi tanı.
