@@ -45,6 +45,10 @@ namespace WarpCord
         public bool DnsOk;
         public bool DnsPoisoned;
         public string DnsText = "—";
+        public bool VoiceChecked;
+        public bool VoiceOk;
+        public long VoiceMs;
+        public string VoiceText = "—";
         public bool ApiChecked;
         public bool ApiOk;
         public long ApiMs;
@@ -317,6 +321,12 @@ namespace WarpCord
                 snap.ApiMs = watch.ElapsedMilliseconds;
                 snap.ApiText = "erişilemiyor · " + Shorten(ex.Message, 46);
             }
+
+            long voiceMs = await UdpProbe.StunAsync(3000);
+            snap.VoiceChecked = true;
+            snap.VoiceOk = voiceMs >= 0;
+            snap.VoiceMs = voiceMs;
+            snap.VoiceText = snap.VoiceOk ? voiceMs + " ms" : L10n.T("engelli");
 
             if (publicIp)
             {

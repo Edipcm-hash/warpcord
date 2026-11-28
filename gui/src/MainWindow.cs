@@ -281,6 +281,7 @@ namespace WarpCord
             AddRow("adapterdns", L10n.T("DNS sunucusu"));
             AddRow("ipv6", L10n.T("IPv6"));
             AddRow("api", "Discord API");
+            AddRow("voice", L10n.T("Ses (UDP)"));
             AddRow("ip", L10n.T("Dış IP"));
             _statsList.ItemsSource = _rows;
         }
@@ -734,6 +735,7 @@ namespace WarpCord
                 Row("adapterdns", "—", Palette.Faint);
                 Row("ipv6", s.Ipv6Enabled ? L10n.T("açık") : L10n.T("kapalı"), Palette.Faint);
                 Row("api", s.ApiChecked ? s.ApiText : "—", s.ApiOk ? Palette.Green : Palette.Faint);
+                Row("voice", "—", Palette.Faint);
                 Row("ip", string.IsNullOrEmpty(s.PublicIp) ? "—" : s.PublicIp, Palette.Faint);
                 return;
             }
@@ -801,6 +803,7 @@ namespace WarpCord
             Row("ipv6", s.Ipv6Enabled ? L10n.T("açık") : L10n.T("kapalı"),
                 s.Ipv6Enabled ? Palette.Green : Palette.Amber);
             Row("api", s.ApiChecked ? s.ApiText : "—", s.ApiOk ? Palette.Green : Palette.Red);
+            Row("voice", s.VoiceChecked ? s.VoiceText : "—", s.VoiceOk ? Palette.Green : Palette.Amber);
             Row("ip", string.IsNullOrEmpty(s.PublicIp) ? "—" : s.PublicIp,
                 string.IsNullOrEmpty(s.PublicIp) ? Palette.Faint : Palette.Dim);
         }

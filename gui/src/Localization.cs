@@ -80,6 +80,8 @@ namespace WarpCord
             { "Dış IP", "Public IP" },
             { "DNS sunucusu", "DNS server" },
             { "IPv6", "IPv6" },
+            { "Ses (UDP)", "Voice (UDP)" },
+            { "engelli", "blocked" },
 
             // pills and status details
             { "KONTROL EDİLİYOR", "CHECKING" },
