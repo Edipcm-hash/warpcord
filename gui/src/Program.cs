@@ -42,6 +42,18 @@ namespace WarpCord
             }
             if (cli.UseEmbeddedEngine) Paths.ForceEmbedded();
             if (cli.RepoRoot != null) Paths.OverrideRepo(cli.RepoRoot);
+            if (cli.InstallApp || cli.UninstallApp)
+            {
+                ConsoleIo.UseUtf8();
+                string error;
+                bool ok = cli.InstallApp
+                    ? SelfInstall.Install(Settings.Load().StartWithWindows, out error)
+                    : SelfInstall.Uninstall(out error);
+                Console.WriteLine(ok
+                    ? (cli.InstallApp ? "kuruldu: " + SelfInstall.TargetDir : "kaldirildi")
+                    : "basarisiz: " + (error ?? "?"));
+                return ok ? 0 : 1;
+            }
             if (cli.SelfTest) return SelfTest.Run();
             if (cli.Smoke) return Smoke.Run();
             if (!string.IsNullOrEmpty(cli.ExecAction)) return Headless.RunAction(cli.ExecAction);

@@ -19,6 +19,7 @@ namespace WarpCord
         public bool TrayEnabled = true;
         public bool Notifications = true;
         public bool MinimizeToTray;
+        public bool StartWithWindows;
         public string LastVersionCheck = "";
         public string LatestVersion = "";
         public bool Advanced;
@@ -50,6 +51,7 @@ namespace WarpCord
             settings.TrayEnabled = Json.Bool(node, true, "trayEnabled");
             settings.Notifications = Json.Bool(node, true, "notifications");
             settings.MinimizeToTray = Json.Bool(node, false, "minimizeToTray");
+            settings.StartWithWindows = Json.Bool(node, false, "startWithWindows");
             settings.LastVersionCheck = Json.Str(node, "lastVersionCheck") ?? "";
             settings.LatestVersion = Json.Str(node, "latestVersion") ?? "";
             settings.Advanced = Json.Bool(node, false, "advanced");
@@ -81,6 +83,7 @@ namespace WarpCord
                     { "trayEnabled", TrayEnabled },
                     { "notifications", Notifications },
                     { "minimizeToTray", MinimizeToTray },
+                    { "startWithWindows", StartWithWindows },
                     { "lastVersionCheck", LastVersionCheck ?? "" },
                     { "latestVersion", LatestVersion ?? "" },
                     { "advanced", Advanced },

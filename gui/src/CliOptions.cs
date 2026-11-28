@@ -13,6 +13,8 @@ namespace WarpCord
         public double RenderHeight;
         public bool Smoke;
         public bool SelfTest;
+        public bool InstallApp;
+        public bool UninstallApp;
         public string RepoRoot;
         public bool Demo;
         public string RunAction;
@@ -50,6 +52,12 @@ namespace WarpCord
                             }
                             else throw new ArgumentException("--size WxH biçiminde olmalı, örn: 1000x760");
                         }
+                        break;
+                    case "--install":
+                        options.InstallApp = true;
+                        break;
+                    case "--uninstall-app":
+                        options.UninstallApp = true;
                         break;
                     case "--selftest":
                         options.SelfTest = true;

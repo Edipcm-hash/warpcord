@@ -41,6 +41,9 @@ namespace WarpCord
         private TextBlock _subtitle, _readinessStatus, _readinessHint, _endpointsStatus, _endpointNote;
         private TextBlock _aboutUi, _aboutTunnel, _aboutRepo, _aboutSource, _aboutUpdate, _aboutStatus, _aboutLink;
         private TextBlock _portableNote;
+        private TextBlock _installNote;
+        private Button _installBtn;
+        private Button _removeInstallBtn;
         private TextBlock _settingsPathNote;
         private TextBlock _engineNote;
         private StackPanel _panelGeneral, _panelReadiness, _panelEndpoints, _panelAbout, _readinessList;
@@ -114,6 +117,9 @@ namespace WarpCord
             _switchMinimize = N<CheckBox>("SwitchMinimize");
             _switchAutoHeal = N<CheckBox>("SwitchAutoHeal");
             _portableNote = N<TextBlock>("PortableNote");
+            _installNote = N<TextBlock>("InstallNote");
+            _installBtn = N<Button>("InstallBtn");
+            _removeInstallBtn = N<Button>("RemoveInstallBtn");
             _settingsPathNote = N<TextBlock>("SettingsPathNote");
             _engineNote = N<TextBlock>("EngineNote");
             _readinessBtn = N<Button>("ReadinessBtn");
@@ -150,6 +156,7 @@ namespace WarpCord
             _switchNotify.IsEnabled = _settings.TrayEnabled;
 
             _subtitle.Text = "WarpCord · " + AppInfo.Version;
+            UpdateInstallUi();
             _portableNote.Text = Paths.IsPortable
                 ? L10n.T("Açık: ayarlar ve motor exe'nin yanında tutulur.") + "  (" + Paths.AppDir + ")"
                 : L10n.T("Kapalı: ayarlar %APPDATA%\\WarpCord altında tutulur.") + "  (" + Paths.SettingsPath + ")";
@@ -198,6 +205,8 @@ namespace WarpCord
             _switchAutoHeal.Checked += ToggleChanged;
             _switchAutoHeal.Unchecked += ToggleChanged;
 
+            _installBtn.Click += delegate { InstallSelf(); };
+            _removeInstallBtn.Click += delegate { RemoveSelf(); };
             _readinessBtn.Click += delegate { RunReadiness(); };
             _endpointsBtn.Click += delegate { RunEndpoints(); };
             _useBestBtn.Click += delegate { UseBestEndpoint(); };
@@ -682,6 +691,37 @@ private void ReadLatestAsset(object release)
                 return text.ToString();
             }
         }
+private void UpdateInstallUi()
+        {
+            bool installed = SelfInstall.IsInstalled;
+            _installNote.Text = installed
+                ? L10n.T("Bu makineye kurulu") + ": " + SelfInstall.TargetDir
+                : L10n.T("Bu makineye kurulu değil. Kurulum, Windows Başlat menüsüne kısayol ekler (yönetici gerekmez).");
+            _installBtn.IsEnabled = !installed || !string.Equals(
+                Path.GetFullPath(SelfInstall.CurrentExe), Path.GetFullPath(SelfInstall.TargetExe),
+                StringComparison.OrdinalIgnoreCase);
+            _removeInstallBtn.IsEnabled = installed;
+        }
+
+        private void InstallSelf()
+        {
+            string error;
+            if (SelfInstall.Install(_settings.StartWithWindows, out error))
+                _aboutStatus.Text = L10n.T("Kuruldu") + ": " + SelfInstall.TargetDir;
+            else
+                _aboutStatus.Text = L10n.T("Kurulum başarısız") + ": " + (error ?? "?");
+            UpdateInstallUi();
+        }
+
+        private void RemoveSelf()
+        {
+            string error;
+            if (SelfInstall.Uninstall(out error))
+                _aboutStatus.Text = L10n.T("Kaldırıldı");
+            else
+                _aboutStatus.Text = L10n.T("Kaldırma başarısız") + ": " + (error ?? "?");
+            UpdateInstallUi();
+        }
         private void SaveAndClose()
         {
             _settings.Save();
@@ -771,6 +811,15 @@ private void ReadLatestAsset(object release)
             var update = root.FindName("AboutUpdate") as TextBlock;
             if (update != null)
                 update.Text = string.IsNullOrEmpty(settings.LatestVersion) ? "—" : settings.LatestVersion;
+            var installNote = root.FindName("InstallNote") as TextBlock;
+            if (installNote != null)
+            {
+                installNote.Text = SelfInstall.IsInstalled
+                    ? L10n.T("Bu makineye kurulu") + ": " + SelfInstall.TargetDir
+                    : L10n.T("Bu makineye kurulu değil. Kurulum, Windows Başlat menüsüne kısayol ekler (yönetici gerekmez).");
+            }
+            var removeInstall = root.FindName("RemoveInstallBtn") as Button;
+            if (removeInstall != null) removeInstall.IsEnabled = SelfInstall.IsInstalled;
             var signature = root.FindName("AboutSignature") as TextBlock;
             if (signature != null)
                 signature.Text = L10n.T("imzasız") + " · " + L10n.T("Smart App Control engelleyebilir");

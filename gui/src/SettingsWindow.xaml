@@ -32,7 +32,7 @@
             </StackPanel>
         </Border>
 
-        <Grid Margin="0,16,0,0" Height="404">
+        <Grid Margin="0,16,0,0" Height="472">
 
             <!-- General -->
             <StackPanel x:Name="PanelGeneral">
@@ -67,6 +67,16 @@
                 <TextBlock x:Name="EngineNote" Style="{StaticResource Faint}" Margin="0,4,0,0"
                            TextTrimming="CharacterEllipsis" FontFamily="{StaticResource MonoFont}" FontSize="10.5"
                            Foreground="{StaticResource TextFaintBrush}"/>
+
+                <Border Style="{StaticResource Divider}" Margin="0,16,0,12"/>
+                <TextBlock Style="{StaticResource SectionLabel}" Text="KURULUM"/>
+                <TextBlock x:Name="InstallNote" Style="{StaticResource Faint}" Margin="0,7,0,0" LineHeight="17"
+                           TextWrapping="Wrap" Text=""/>
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <Button x:Name="InstallBtn" Style="{StaticResource GhostButton}" Content="Bu makineye kur" Width="160"/>
+                    <Button x:Name="RemoveInstallBtn" Style="{StaticResource GhostButton}" Content="Kaldır" Width="100"
+                            Margin="8,0,0,0"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Readiness -->

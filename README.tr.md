@@ -30,6 +30,7 @@ Windows 10/11 (64-bit), yönetici hakkı ve internet yeterli. **Python ve .NET S
 - **Ayarlar penceresi:** dil (Türkçe/İngilizce), tepsi ve bildirimler, otomatik onarım, **Hazırlık** denetimi (SAC/WDAC/Defender/politika), **Uçlar** karşılaştırması, sürüm denetimi ve tanı paketi.
 - **Discord'u yeniden başlat** (durum çubuğu): kurulumdan sonra gereken "tamamen kapat, aç" adımı tek tık.
 - **Ağ değişti uyarısı:** Wi-Fi → kablo geçişinde DNS'i yenilemeyi önerir.
+- **Bu makineye kur:** Ayarlar → Kurulum; Başlat menüsü kısayolu ekler, yönetici gerekmez (taşınabilir kullanım bozulmaz).
 - **Yönetici:** arayüz yöneticisiz açılır, işlem için UAC ile yükselir.
 - **Tek başına:** `WarpCord.exe`'yi tek başına kopyalasan da çalışır; motoru ilk açılışta `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` altına açar. `portable.txt` koyarsan ayarlar ve motor exe'nin yanında kalır.
 

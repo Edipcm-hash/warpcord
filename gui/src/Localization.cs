@@ -261,6 +261,15 @@ namespace WarpCord
             { "imzalı", "signed" },
             { "imzasız", "unsigned" },
             { "Smart App Control engelleyebilir", "Smart App Control may block it" },
+            { "KURULUM", "INSTALL" },
+            { "Bu makineye kur", "Install on this machine" },
+            { "Kaldır", "Remove" },
+            { "Kuruldu", "Installed" },
+            { "Kaldırıldı", "Removed" },
+            { "Kurulum başarısız", "Install failed" },
+            { "Kaldırma başarısız", "Remove failed" },
+            { "Bu makineye kurulu", "Installed on this machine" },
+            { "Bu makineye kurulu değil. Kurulum, Windows Başlat menüsüne kısayol ekler (yönetici gerekmez).", "Not installed on this machine. Installing adds a Start menu shortcut (no admin needed)." },
             { "arayüz", "ui" }
         };
 

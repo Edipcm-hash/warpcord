@@ -30,6 +30,7 @@ Windows 10/11 (64-bit), admin rights and internet are enough. **No Python, no .N
 - **Settings window:** language (Turkish/English), tray and notifications, automatic repair, **Readiness** check (SAC/WDAC/Defender/policy), **Endpoints** comparison, update check and diagnostics bundle.
 - **Restart Discord** (status bar): the "fully quit and reopen" step after an install, in one click.
 - **Network changed banner:** after Wi-Fi → cable it offers to refresh DNS.
+- **Install on this machine:** Settings → Install; adds a Start menu shortcut, no admin needed (portable use keeps working).
 - **Elevation:** the window opens unelevated and escalates through UAC only for actions.
 - **Standalone:** copying `WarpCord.exe` on its own works; the engine is unpacked to `%LOCALAPPDATA%\WarpCord\engine\<version>\` on first use. Drop a `portable.txt` next to it to keep settings and the engine beside the exe.
 
