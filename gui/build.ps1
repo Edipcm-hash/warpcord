@@ -98,7 +98,9 @@ $engineEmbed = @(
     @{ File = 'tools\warpfrag.ps1';          Name = 'WarpCord.Engine.tools.warpfrag.ps1' },
     @{ File = 'tools\warpfrag\WarpFrag.cs';  Name = 'WarpCord.Engine.tools.warpfrag.WarpFrag.cs' },
     @{ File = 'tools\warpreadiness.ps1';     Name = 'WarpCord.Engine.tools.warpreadiness.ps1' },
-    @{ File = 'tools\warpendpoints.ps1';     Name = 'WarpCord.Engine.tools.warpendpoints.ps1' }
+    @{ File = 'tools\warpendpoints.ps1';     Name = 'WarpCord.Engine.tools.warpendpoints.ps1' },
+    @{ File = 'tools\warpac.ps1';            Name = 'WarpCord.Engine.tools.warpac.ps1' },
+    @{ File = 'tools\warphost.ps1';          Name = 'WarpCord.Engine.tools.warphost.ps1' }
 )
 foreach ($entry in $engineEmbed) {
     $full = Join-Path $root $entry.File

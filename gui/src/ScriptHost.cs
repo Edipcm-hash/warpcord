@@ -45,7 +45,10 @@ namespace WarpCord
                     throw new TimeoutException("Betik zaman aşımına uğradı: " + System.IO.Path.GetFileName(scriptPath));
                 }
 
-                process.WaitForExit();
+                // A detached child (the SAC proxy host) can keep the pipe open, so
+                // never wait for output EOF without a bound.
+                try { process.CancelOutputRead(); } catch { }
+                try { process.CancelErrorRead(); } catch { }
                 return output.ToString().Trim();
             }
         }

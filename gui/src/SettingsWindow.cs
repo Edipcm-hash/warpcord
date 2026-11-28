@@ -44,6 +44,8 @@ namespace WarpCord
         private TextBlock _installNote;
         private Button _installBtn;
         private Button _removeInstallBtn;
+        private Button _sacBtn;
+        private TextBlock _sacNote;
         private TextBlock _settingsPathNote;
         private TextBlock _engineNote;
         private StackPanel _panelGeneral, _panelReadiness, _panelEndpoints, _panelAbout, _readinessList;
@@ -120,6 +122,8 @@ namespace WarpCord
             _installNote = N<TextBlock>("InstallNote");
             _installBtn = N<Button>("InstallBtn");
             _removeInstallBtn = N<Button>("RemoveInstallBtn");
+            _sacBtn = N<Button>("SacBtn");
+            _sacNote = N<TextBlock>("SacNote");
             _settingsPathNote = N<TextBlock>("SettingsPathNote");
             _engineNote = N<TextBlock>("EngineNote");
             _readinessBtn = N<Button>("ReadinessBtn");
@@ -157,6 +161,7 @@ namespace WarpCord
 
             _subtitle.Text = "WarpCord · " + AppInfo.Version;
             UpdateInstallUi();
+            UpdateSacUi();
             _portableNote.Text = Paths.IsPortable
                 ? L10n.T("Açık: ayarlar ve motor exe'nin yanında tutulur.") + "  (" + Paths.AppDir + ")"
                 : L10n.T("Kapalı: ayarlar %APPDATA%\\WarpCord altında tutulur.") + "  (" + Paths.SettingsPath + ")";
@@ -207,6 +212,7 @@ namespace WarpCord
 
             _installBtn.Click += delegate { InstallSelf(); };
             _removeInstallBtn.Click += delegate { RemoveSelf(); };
+            _sacBtn.Click += delegate { ToggleSac(); };
             _readinessBtn.Click += delegate { RunReadiness(); };
             _endpointsBtn.Click += delegate { RunEndpoints(); };
             _useBestBtn.Click += delegate { UseBestEndpoint(); };
@@ -722,6 +728,50 @@ private void UpdateInstallUi()
                 _aboutStatus.Text = L10n.T("Kaldırma başarısız") + ": " + (error ?? "?");
             UpdateInstallUi();
         }
+private static object ReadSacState()
+        {
+            string script = Paths.SacScript;
+            if (script == null) return null;
+            try { return Json.Parse(ScriptHost.Run(script, "-Status", 30000)); }
+            catch { return null; }
+        }
+
+        private void UpdateSacUi()
+        {
+            object state = ReadSacState();
+            bool running = Json.Bool(state, false, "running");
+            _sacNote.Text = running
+                ? L10n.T("SAC modu açık · proxy 127.0.0.1:1081 · Discord PAC ile yönlendiriliyor")
+                : L10n.T("SAC-güvenli mod kapalı. Açınca Discord, sistem proxy'si (PAC) üzerinden parçalanmış bağlantı kullanır; sing-box ve TUN çalışmaz, IP gizlenmez.");
+            _sacBtn.Content = running ? L10n.T("SAC-güvenli modu kapat") : L10n.T("SAC-güvenli modu aç");
+        }
+
+        private void ToggleSac()
+        {
+            string script = Paths.SacScript;
+            if (script == null)
+            {
+                _aboutStatus.Text = L10n.T("warpac.ps1 bulunamadı");
+                return;
+            }
+
+            object state = ReadSacState();
+            bool running = Json.Bool(state, false, "running");
+            try
+            {
+                object result = Json.Parse(ScriptHost.Run(script, running ? "-Stop" : "-Start", 60000));
+                bool ok = Json.Bool(result, false, "ok");
+                bool nowRunning = Json.Bool(result, false, "running");
+                UpdateSacUi();
+                _aboutStatus.Text = ok
+                    ? (nowRunning ? L10n.T("SAC modu açık") : L10n.T("SAC modu kapalı"))
+                    : L10n.T("SAC modu değiştirilemedi");
+            }
+            catch (Exception ex)
+            {
+                _aboutStatus.Text = L10n.T("SAC modu değiştirilemedi") + ": " + ex.Message;
+            }
+        }
         private void SaveAndClose()
         {
             _settings.Save();
@@ -811,6 +861,11 @@ private void UpdateInstallUi()
             var update = root.FindName("AboutUpdate") as TextBlock;
             if (update != null)
                 update.Text = string.IsNullOrEmpty(settings.LatestVersion) ? "—" : settings.LatestVersion;
+            var sacNote = root.FindName("SacNote") as TextBlock;
+            if (sacNote != null)
+                sacNote.Text = L10n.T("SAC-güvenli mod kapalı. Açınca Discord, sistem proxy'si (PAC) üzerinden parçalanmış bağlantı kullanır; sing-box ve TUN çalışmaz, IP gizlenmez.");
+            var sacBtn = root.FindName("SacBtn") as Button;
+            if (sacBtn != null) sacBtn.Content = L10n.T("SAC-güvenli modu aç");
             var installNote = root.FindName("InstallNote") as TextBlock;
             if (installNote != null)
             {

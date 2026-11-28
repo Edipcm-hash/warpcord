@@ -42,6 +42,15 @@ namespace WarpCord
             }
             if (cli.UseEmbeddedEngine) Paths.ForceEmbedded();
             if (cli.RepoRoot != null) Paths.OverrideRepo(cli.RepoRoot);
+            if (!string.IsNullOrEmpty(cli.SacAction))
+            {
+                ConsoleIo.UseUtf8();
+                string sac = Paths.SacScript;
+                if (sac == null) { Console.Error.WriteLine("warpac.ps1 bulunamadi"); return 2; }
+                string flag = cli.SacAction == "stop" ? "-Stop" : (cli.SacAction == "status" ? "-Status" : "-Start");
+                Console.WriteLine(ScriptHost.Run(sac, flag, 60000).Trim());
+                return 0;
+            }
             if (cli.InstallApp || cli.UninstallApp)
             {
                 ConsoleIo.UseUtf8();

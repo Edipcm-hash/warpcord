@@ -15,6 +15,7 @@ namespace WarpCord
         public bool SelfTest;
         public bool InstallApp;
         public bool UninstallApp;
+        public string SacAction;
         public string RepoRoot;
         public bool Demo;
         public string RunAction;
@@ -52,6 +53,9 @@ namespace WarpCord
                             }
                             else throw new ArgumentException("--size WxH biçiminde olmalı, örn: 1000x760");
                         }
+                        break;
+                    case "--sac":
+                        options.SacAction = Next(args, ref i, "--sac");
                         break;
                     case "--install":
                         options.InstallApp = true;

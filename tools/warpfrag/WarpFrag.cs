@@ -20,7 +20,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-internal static class WarpFrag
+public static class WarpFrag
 {
     private static string _logPath;
     private static int _delayMs = 2;
@@ -28,7 +28,7 @@ internal static class WarpFrag
     private static string _dohServer = "1.1.1.1";
     private static bool _useDoh = true;
 
-    private static void Main(string[] args)
+    public static void Main(string[] args)
     {
         int port = 0;
         for (int i = 0; i < args.Length; i++)

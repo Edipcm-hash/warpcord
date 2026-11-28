@@ -32,7 +32,7 @@
             </StackPanel>
         </Border>
 
-        <Grid Margin="0,16,0,0" Height="472">
+        <Grid Margin="0,16,0,0" Height="560">
 
             <!-- General -->
             <StackPanel x:Name="PanelGeneral">
@@ -67,6 +67,11 @@
                 <TextBlock x:Name="EngineNote" Style="{StaticResource Faint}" Margin="0,4,0,0"
                            TextTrimming="CharacterEllipsis" FontFamily="{StaticResource MonoFont}" FontSize="10.5"
                            Foreground="{StaticResource TextFaintBrush}"/>
+
+                <Border Style="{StaticResource Divider}" Margin="0,14,0,10"/>
+                <TextBlock x:Name="SacNote" Style="{StaticResource Faint}" TextWrapping="Wrap" LineHeight="17" Text=""/>
+                <Button x:Name="SacBtn" Style="{StaticResource GhostButton}" Content="SAC-güvenli modu aç"
+                        Width="230" Margin="0,10,0,0" HorizontalAlignment="Left"/>
 
                 <Border Style="{StaticResource Divider}" Margin="0,16,0,12"/>
                 <TextBlock Style="{StaticResource SectionLabel}" Text="KURULUM"/>

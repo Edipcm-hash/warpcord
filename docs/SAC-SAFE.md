@@ -55,3 +55,31 @@ duyulduğundan bu yol tek başına yetmez.
 ## Karar
 Test makinesi (Discord + SAC) sağlanınca Tasarım A `--sac-safe` deneysel bayrağı arkasında uygulanacak;
 o zamana kadar ücretsiz ve kesin çözüm SAC'ı kapatmak (uygulama bunu uyarı olarak gösteriyor).
+
+## Durum: prototip uygulandı (deneysel)
+
+`tools/warpac.ps1` + `tools/warphost.ps1` + `WarpFrag` (artık `public`) bu akışı kurar:
+
+```powershell
+dist\WarpCord.exe --sac start     # proxy + PAC + WinINET
+dist\WarpCord.exe --sac status    # JSON durum
+dist\WarpCord.exe --sac stop      # geri al
+```
+
+Arayüzde: **Ayarlar → Genel → SAC-güvenli modu aç/kapat**.
+
+Bu makinede doğrulananlar:
+
+| Adım | Sonuç |
+|---|---|
+| Proxy'yi `powershell.exe` içinde barındırma | `Add-Type` + `[WarpFrag]::Main`, ayrı exe yok |
+| PAC yazımı + `HKCU\...\Internet Settings\AutoConfigURL` | `file:///…/proxy.pac` yazıldı, önceki değer yedeklendi |
+| Proxy üzerinden Discord API | `curl -x 127.0.0.1:1081 https://discord.com/api/v9/gateway` → **200** `{"url":"wss://gateway.discord.gg"}` |
+| Proxy günlüğü | `CONNECT discord.com:443 -> 162.159.138.232 first=458B` (DoH ile çözüldü) |
+| Kapatma | PID durdu, port kapandı, `AutoConfigURL` silindi/yedeğe döndü, PAC silindi |
+
+Hâlâ ölçülmeyen: **Discord'un (Electron) PAC'ı gerçekten kullanıp kullanmadığı** ve ses/gateway davranışı.
+Bu yüzden mod "deneysel" olarak işaretli ve varsayılan kapalı.
+
+Not: proxy'yi başlatan komut arka planda kalıcı bir `powershell.exe` bırakır; `Start-Process -Wait` ile
+çağırmayın (PowerShell alt süreç ağacını da bekler). `--sac start` normal şekilde döner.

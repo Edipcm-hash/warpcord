@@ -112,7 +112,7 @@ namespace WarpCord
         {
             Console.WriteLine("motor");
             string[] expected = Engine.ExpectedResources().ToArray();
-            Check("expects ten engine files", expected.Length == 10);
+            Check("expects twelve engine files", expected.Length == 12);
             var embedded = new HashSet<string>(typeof(Engine).Assembly.GetManifestResourceNames(), StringComparer.Ordinal);
             int missing = expected.Count(name => !embedded.Contains(name));
             Check("all engine files embedded", missing == 0);

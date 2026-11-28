@@ -26,6 +26,8 @@ namespace WarpCord
             @"tools\warpfrag.ps1",
             @"tools\warpfrag\WarpFrag.cs",
             @"tools\warpreadiness.ps1",
+            @"tools\warpac.ps1",
+            @"tools\warphost.ps1",
             @"tools\warpendpoints.ps1"
         };
 

@@ -122,6 +122,7 @@ namespace WarpCord
         public static string StatusScript { get { return Script(@"app\status.ps1", null); } }
         public static string HealScript { get { return Script(@"tools\warpheal.ps1", @"tools\warpheal.ps1"); } }
         public static string DiagnoseScript { get { return Script(@"tools\tani.ps1", null); } }
+        public static string SacScript { get { return Script(@"tools\warpac.ps1", @"tools\warpac.ps1"); } }
 
         /// <summary>The classic one-click launcher next to this repo (manual install route).</summary>
         public static string ManualInstallScript
