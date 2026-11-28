@@ -264,6 +264,8 @@ namespace WarpCord
             { "imzalı", "signed" },
             { "imzasız", "unsigned" },
             { "Smart App Control engelleyebilir", "Smart App Control may block it" },
+            { "EK SÜREÇLER (DENEYSEL)", "EXTRA PROCESSES (EXPERIMENTAL)" },
+            { "Bu süreçler de tünellenir (virgülle). Yeniden Bağlan ile uygulanır.", "These processes are tunnelled too (comma separated). Applied on Reconnect." },
             { "KURULUM", "INSTALL" },
             { "Bu makineye kur", "Install on this machine" },
             { "Kaldır", "Remove" },

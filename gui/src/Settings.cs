@@ -12,6 +12,7 @@ namespace WarpCord
         public bool Force;
         public bool KeepDns;
         public string Endpoint = "";
+        public string ExtraApps = "";
         public string InstallMethod = "app";
         public bool AskedInstallMethod;
         public string Language = "tr";
@@ -42,6 +43,7 @@ namespace WarpCord
             settings.Force = Json.Bool(node, false, "force");
             settings.KeepDns = Json.Bool(node, false, "keepDns");
             settings.Endpoint = Json.Str(node, "endpoint") ?? "";
+            settings.ExtraApps = Json.Str(node, "extraApps") ?? "";
             string method = Json.Str(node, "installMethod");
             if (method == "app" || method == "manual") settings.InstallMethod = method;
             settings.AskedInstallMethod = Json.Bool(node, false, "askedInstallMethod");
@@ -76,6 +78,7 @@ namespace WarpCord
                     { "force", Force },
                     { "keepDns", KeepDns },
                     { "endpoint", Endpoint ?? "" },
+                    { "extraApps", ExtraApps ?? "" },
                     { "installMethod", InstallMethod ?? "app" },
                     { "askedInstallMethod", AskedInstallMethod },
                     { "language", Language ?? "tr" },

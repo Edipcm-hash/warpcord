@@ -1011,8 +1011,21 @@ function Select-WarpEndpoint {
 }
 
 # ---------------------------------------------------------------- configs --
+# Extra processes the user opted in (experimental): C:\ProgramData\DiscordTunnel\extra-apps.json
+function Get-WarpExtraProcesses {
+    $path = Join-Path 'C:\ProgramData\DiscordTunnel' 'extra-apps.json'
+    $data = Read-WarpJsonFile $path
+    if (-not $data) { return @() }
+    $list = @()
+    foreach ($item in @($data.processes)) {
+        $name = ([string]$item).Trim()
+        if ($name -match '^[A-Za-z0-9._-]+\.exe$') { $list += $name }
+    }
+    return $list
+}
 function New-WarpTunnelConfig {
     param($Account, $Endpoint, [string]$LogPath)
+    $processNames = @($script:DiscordProcesses) + @(Get-WarpExtraProcesses)
     return [ordered]@{
         log = [ordered]@{ level = 'info'; timestamp = $true; output = $LogPath }
         experimental = $script:WarpClashApi
@@ -1040,7 +1053,7 @@ function New-WarpTunnelConfig {
                 [ordered]@{ action = 'sniff' },
                 [ordered]@{ protocol = 'dns'; action = 'hijack-dns' },
                 [ordered]@{ domain_suffix = $script:DiscordSuffixes; outbound = 'warp' },
-                [ordered]@{ process_name = $script:DiscordProcesses; outbound = 'warp' },
+                [ordered]@{ process_name = $processNames; outbound = 'warp' },
                 [ordered]@{ process_path_regex = @($script:DiscordProcessRegex); outbound = 'warp' }
             )
             final = 'direct'
@@ -1050,6 +1063,7 @@ function New-WarpTunnelConfig {
 
 function New-WarpDpiConfig {
     param([string]$LogPath, [int]$FragPort)
+    $processNames = @($script:DiscordProcesses) + @(Get-WarpExtraProcesses)
     return [ordered]@{
         log = [ordered]@{ level = 'info'; timestamp = $true; output = $LogPath }
         experimental = $script:WarpClashApi
@@ -1081,7 +1095,7 @@ function New-WarpDpiConfig {
                 [ordered]@{ action = 'sniff' },
                 [ordered]@{ protocol = 'dns'; action = 'hijack-dns' },
                 [ordered]@{ network = 'tcp'; domain_suffix = $script:DiscordSuffixes; outbound = 'frag' },
-                [ordered]@{ network = 'tcp'; process_name = $script:DiscordProcesses; outbound = 'frag' },
+                [ordered]@{ network = 'tcp'; process_name = ($script:DiscordProcesses + @(Get-WarpExtraProcesses)); outbound = 'frag' },
                 [ordered]@{ network = 'tcp'; process_path_regex = @($script:DiscordProcessRegex); outbound = 'frag' }
             )
             final = 'direct'

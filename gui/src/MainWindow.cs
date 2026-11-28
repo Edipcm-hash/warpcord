@@ -111,6 +111,7 @@ namespace WarpCord
         private TextBlock _methodNote;
         private Button _manualInstallBtn;
         private TextBox _endpoint;
+        private TextBox _extraApps;
 
         private ScrollViewer _leftScroll;
         private ConsoleWriter _console;
@@ -225,6 +226,7 @@ namespace WarpCord
             _force = N<CheckBox>("ForceCheck");
             _keepDns = N<CheckBox>("KeepDnsCheck");
             _endpoint = N<TextBox>("EndpointBox");
+            _extraApps = N<TextBox>("ExtraAppsBox");
             _uninstallBtn = N<Button>("UninstallBtn");
             _statsList = N<ItemsControl>("StatsList");
             _updatedText = N<TextBlock>("UpdatedText");
@@ -319,6 +321,7 @@ namespace WarpCord
             _force.IsChecked = _settings.Force;
             _keepDns.IsChecked = _settings.KeepDns;
             _endpoint.Text = _settings.Endpoint ?? "";
+            _extraApps.Text = _settings.ExtraApps ?? "";
             _autoscroll.IsChecked = _settings.Autoscroll;
             _log.Autoscroll = _settings.Autoscroll;
 
@@ -384,6 +387,7 @@ namespace WarpCord
             _autoscroll.Checked += Autoscroll_Changed;
             _autoscroll.Unchecked += Autoscroll_Changed;
             _endpoint.TextChanged += Endpoint_Changed;
+            _extraApps.TextChanged += ExtraApps_Changed;
 
             _runner.Line += delegate(LogLine line)
             {
@@ -1233,6 +1237,11 @@ namespace WarpCord
             _settings.Endpoint = _endpoint.Text ?? "";
         }
 
+private void ExtraApps_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (_initializing) return;
+            _settings.ExtraApps = _extraApps.Text ?? "";
+        }
         private void Autoscroll_Changed(object sender, RoutedEventArgs e)
         {
             if (_initializing) return;

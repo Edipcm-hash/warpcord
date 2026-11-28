@@ -18,7 +18,8 @@ param(
     [string]$WintunVersion = '0.14.1',
     [switch]$NoElevate,
     [switch]$NoSecurityChanges,
-    [string]$RepoRoot = ''
+    [string]$RepoRoot = '',
+    [string]$ExtraApps = $null
 )
 
 $ErrorActionPreference = 'Continue'
@@ -61,6 +62,17 @@ if (-not (Test-WarpAdmin)) {
 
 Initialize-WarpTls
 if (-not (Test-Path $InstallDir)) { New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null }
+# Experimental: extra processes the user wants behind the same tunnel. The GUI
+# always passes this switch (an empty value clears the list); the .bat passes
+# nothing and leaves whatever is there alone.
+if ($null -ne $ExtraApps) {
+    $names = @($ExtraApps -split '[,;]' |
+        ForEach-Object { $_.Trim().ToLowerInvariant() } |
+        Where-Object { $_ -match '^[a-z0-9._-]+\.exe$' } |
+        Select-Object -Unique)
+    Write-WarpJsonFile (Join-Path $InstallDir 'extra-apps.json') ([ordered]@{ processes = @($names) })
+    if ($names.Count -gt 0) { Write-WarpLog ('ek surecler: ' + ($names -join ', ')) 'OK' }
+}
 Initialize-WarpLog -Path (Join-Path $InstallDir 'install.log') -Title 'WarpCord install'
 
 # --------------------------------------------------- host hardening (v3) --

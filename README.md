@@ -36,7 +36,7 @@ Windows 10/11 (64-bit), admin rights and internet are enough. **No Python, no .N
 
 ![Settings](docs/ui-settings.png)
 
-Language: **gear → Settings → Language** (Turkish / English). Applied immediately and remembered — [screenshot](docs/ui-language.png).
+Full user guide: [docs/GUI.md](docs/GUI.md). Language: **gear → Settings → Language** (Turkish / English). Applied immediately and remembered — [screenshot](docs/ui-language.png).
 
 ### Two install routes
 

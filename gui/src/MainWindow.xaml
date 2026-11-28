@@ -224,6 +224,12 @@
                                         <TextBox x:Name="EndpointBox" Style="{StaticResource InputBox}" Margin="0,7,0,0"
                                                  Tag="162.159.192.1:2408"/>
 
+                                        <TextBlock Style="{StaticResource SectionLabel}" Text="EK SÜREÇLER (DENEYSEL)" Margin="0,14,0,0"/>
+                                        <TextBox x:Name="ExtraAppsBox" Style="{StaticResource InputBox}" Margin="0,7,0,0"
+                                                 Tag="cs2.exe, notepad.exe"/>
+                                        <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0" LineHeight="16"
+                                                   Text="Bu süreçler de tünellenir (virgülle). Yeniden Bağlan ile uygulanır."/>
+
                                         <TextBlock Style="{StaticResource SectionLabel}" Text="KURULUM YÖNTEMİ" Margin="0,14,0,0"/>
                                         <Border Style="{StaticResource SegmentedHost}" Margin="0,7,0,0">
                                             <UniformGrid Columns="2">

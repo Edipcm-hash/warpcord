@@ -36,6 +36,7 @@ namespace WarpCord
                         (settings.Force ? " -Force" : "") +
                         (settings.KeepDns ? " -KeepDns" : "") +
                         (endpoint.Length > 0 ? " -Endpoint " + endpoint : "") +
+                        " -ExtraApps '" + Sanitize(settings.ExtraApps) + "'" +
                         " -NoElevate" + repoArg,
                         "Kurulum",
                         @"app\install.ps1");
@@ -95,6 +96,18 @@ namespace WarpCord
             }
         }
 
+/// <summary>Only process names and separators may reach the installer's argument list.</summary>
+        private static string Sanitize(string list)
+        {
+            if (string.IsNullOrEmpty(list)) return "";
+            var builder = new System.Text.StringBuilder();
+            foreach (char c in list)
+            {
+                if (char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == ',' || c == ';' || c == ' ')
+                    builder.Append(c);
+            }
+            return builder.ToString();
+        }
         public static bool NeedsAdmin(ActionKind kind)
         {
             return kind != ActionKind.Status;
