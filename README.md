@@ -23,7 +23,7 @@ Windows 10/11 (64-bit), admin rights and internet are enough. **No Python, no .N
 
 ![WarpCord window](docs/ui-preview.png)
 
-- **Live status:** mode, endpoint, TUN, processes, last repair, DNS, Discord API latency (mini graph), public IP.
+- **Live status:** mode, endpoint, TUN, processes, last repair, DNS, Discord API latency (mini graph), voice (UDP) probe, traffic counter, public IP.
 - **One button:** *Kur ve Bağlan* when absent, *Onar* when broken, *Yeniden Bağlan* when healthy.
 - **Tray icon:** status colour plus a notification when the tunnel drops; minimises to the tray.
 - **Log tabs:** Action / Tunnel (`tunnel.log`) / Repair (`heal.log`), live.

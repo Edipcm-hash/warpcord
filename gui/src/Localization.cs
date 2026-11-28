@@ -81,6 +81,7 @@ namespace WarpCord
             { "DNS sunucusu", "DNS server" },
             { "IPv6", "IPv6" },
             { "Ses (UDP)", "Voice (UDP)" },
+            { "Trafik", "Traffic" },
             { "engelli", "blocked" },
 
             // pills and status details

@@ -23,7 +23,7 @@ Windows 10/11 (64-bit), yönetici hakkı ve internet yeterli. **Python ve .NET S
 
 ![WarpCord arayüzü](docs/ui-preview.png)
 
-- **Canlı durum:** mod, uç, TUN, süreçler, son onarım, DNS, Discord API gecikmesi (mini grafik), dış IP.
+- **Canlı durum:** mod, uç, TUN, süreçler, son onarım, DNS, Discord API gecikmesi (mini grafik), ses (UDP) testi, trafik sayacı, dış IP.
 - **Tek düğme:** kurulu değilse *Kur ve Bağlan*, sorun varsa *Onar*, sağlıklıysa *Yeniden Bağlan*.
 - **Tepsi simgesi:** durum rengi + tünel düşünce bildirim; küçültünce tepsiye iner.
 - **Günlük sekmeleri:** İşlem / Tünel (`tunnel.log`) / Onarım (`heal.log`) — canlı akar.

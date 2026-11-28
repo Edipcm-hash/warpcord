@@ -112,6 +112,13 @@ function Initialize-WarpTls {
     } catch { }
 }
 
+# Localhost-only Clash API used by the GUI for live traffic counters.
+$script:WarpClashApi = [ordered]@{
+    clash_api = [ordered]@{
+        external_controller = '127.0.0.1:9099'
+        default_mode        = 'rule'
+    }
+}
 function Test-WarpAdmin {
     try {
         $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -1008,6 +1015,7 @@ function New-WarpTunnelConfig {
     param($Account, $Endpoint, [string]$LogPath)
     return [ordered]@{
         log = [ordered]@{ level = 'info'; timestamp = $true; output = $LogPath }
+        experimental = $script:WarpClashApi
         dns = [ordered]@{
             servers = @([ordered]@{ type = 'https'; tag = 'doh'; server = '1.1.1.1'; path = '/dns-query' })
             final   = 'doh'
@@ -1044,6 +1052,7 @@ function New-WarpDpiConfig {
     param([string]$LogPath, [int]$FragPort)
     return [ordered]@{
         log = [ordered]@{ level = 'info'; timestamp = $true; output = $LogPath }
+        experimental = $script:WarpClashApi
         dns = [ordered]@{
             # The DoH request itself goes through the fragmenting proxy, so even
             # a filtered "cloudflare-dns.com" name cannot break resolution.

@@ -49,6 +49,10 @@ namespace WarpCord
         public bool VoiceOk;
         public long VoiceMs;
         public string VoiceText = "—";
+        public bool TrafficOk;
+        public long TrafficUp;
+        public long TrafficDown;
+        public string TrafficText = "—";
         public bool ApiChecked;
         public bool ApiOk;
         public long ApiMs;
@@ -102,6 +106,8 @@ namespace WarpCord
             {
                 snap.Error = ex.Message;
             }
+
+            try { await TrafficAsync(snap); } catch { }
 
             if (network)
             {
@@ -349,6 +355,44 @@ namespace WarpCord
             }
         }
 
+        /// <summary>Live bytes from the localhost Clash API (sing-box), if exposed.</summary>
+        private static async Task TrafficAsync(Snapshot snap)
+        {
+            if (!snap.Installed) return;
+            try
+            {
+                string body = await Http.GetStringAsync("http://127.0.0.1:9099/connections");
+                object node = Json.Parse(body);
+                long up = ToLong(Json.Get(node, "uploadTotal"));
+                long down = ToLong(Json.Get(node, "downloadTotal"));
+                snap.TrafficOk = true;
+                snap.TrafficUp = up;
+                snap.TrafficDown = down;
+                snap.TrafficText = "↑ " + FormatBytes(up) + " · ↓ " + FormatBytes(down);
+            }
+            catch
+            {
+                snap.TrafficOk = false;
+                snap.TrafficText = "—";
+            }
+        }
+
+        private static long ToLong(object value)
+        {
+            if (value == null) return 0;
+            try { return Convert.ToInt64(value); }
+            catch { return 0; }
+        }
+
+        internal static string FormatBytes(long bytes)
+        {
+            if (bytes < 1024) return bytes + " B";
+            double kb = bytes / 1024.0;
+            if (kb < 1024) return kb.ToString("0.#") + " KB";
+            double mb = kb / 1024.0;
+            if (mb < 1024) return mb.ToString("0.#") + " MB";
+            return (mb / 1024.0).ToString("0.##") + " GB";
+        }
         private static async Task<string[]> ResolveAsync(string host, int timeoutMs)
         {
             try
