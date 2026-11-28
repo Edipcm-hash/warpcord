@@ -5,6 +5,15 @@ Bu dosya sürüm notlarının depodaki kopyasıdır. Ayrıntılı, biçimlendiri
 - [v3.0.0 — temiz Windows 11'de tek tık + tanılama](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0)
 - [v2.5.0 — kendi kendini onaran koruyucu](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 1.3 — tek dosya: motor exe'nin içinde
+
+`WarpCord.exe` artık **kendi başına** çalışıyor; yanında `app\` ve `tools\` klasörleri olmadan da kurulum yapıyor.
+
+- **Gömülü motor**: `app\install.ps1`, `status.ps1`, `uninstall.ps1`, `tools\warpcore.ps1`, `warpheal.ps1`, `tani.ps1`, `warpfrag.ps1` ve `tools\warpfrag\WarpFrag.cs` gömülü kaynak olarak taşınır (~163 KB, exe 466 KB). İlk kullanımda `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` altına bayt bayt açılır (`.engine` sürüm damgası; eski sürüm klasörleri budanır).
+- **Kaynak seçimi**: exe'nin yanındaki/üstündeki gerçek repo > `state.json`'daki kayıtlı klasör > gömülü motor. `--engine` gömülü motoru zorlar; durum çubuğu hangisinin kullanıldığını yazar ("gömülü motor · …").
+- **Tek dosya modunda arayüz**: *Elle (WarpCord.bat)* seçeneği kapanır, panel "tek dosya modu" der, ana düğme ölü bir "Elle Kur" etiketi göstermez ([görünüm](docs/ui-standalone.png)).
+- **Doğrulama**: boş bir klasöre tek başına kopyalanan exe ile `--smoke` 8/8, `--exec status` çıkış 0 ve **tam kurulum** (`--exec install`) 24,2 sn'de çıkış 0; çıkarılan dosyalar kaynakla SHA-256 düzeyinde aynı.
+
 ## Arayüz 1.2 — Smart App Control uyarısı + imzalama desteği
 
 Windows 11'in **Akıllı Uygulama Denetimi** (Smart App Control) açıkken imzasız ve itibarı bilinmeyen hiçbir ikili çalışmıyor ve uygulama bazlı izin listesi yok; bu yüzden imzasız `WarpCord.exe` hiç başlamıyor, `sing-box.exe` de engelleniyor. Artık bu durum sessiz bir hata değil:

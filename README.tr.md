@@ -45,10 +45,13 @@ Gereksinimler: Windows 10/11 **64-bit** (AMD64 veya ARM64), yönetici hakkı (TU
 
 `dist\WarpCord.exe` aynı motoru tek pencereden yönetir. Kurulum paketi, ek çalışma zamanı, Python ya da .NET SDK gerekmez: Windows 10/11 ile gelen .NET Framework 4.8 üzerinde çalışan tek dosyadır.
 
+**Tek başına çalışır.** PowerShell motoru (`install`, `status`, `onar`, `tanı`, `kaldır` ve DPI proxy kaynağı) exe'nin içinde gömülüdür; ilk açılışta `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` klasörüne açılır ve oradan çalıştırılır. Yani `WarpCord.exe`'yi masaüstüne tek başına kopyalasan da kurulum, onarım ve teşhis çalışır. Klasörle birlikte dağıtırsan exe'nin yanındaki `app\`/`tools\` betikleri tercih edilir; o zaman klasik *Elle (WarpCord.bat)* seçeneği de açık olur.
+
 ![WarpCord arayüzü](docs/ui-preview.png)
 
 | Ne yapar | Nasıl |
 |---|---|
+| Tek dosya | Motoru, XAML'ı ve logoyu taşır (~466 KB); klasik yollar istenirse klasörden de çalışır |
 | Canlı durum | Mod, uç, TUN adaptörü, `sing-box`/proxy süreçleri, son onarım, DNS, Discord API gecikmesi ve dış IP. Süreç/dosya durumu 3 saniyede, ağ kontrolleri 20 saniyede bir yenilenir |
 | Tek düğme | Kurulu değilse **Kur ve Bağlan**, sorun varsa **Onar**, sağlıklıysa **Yeniden Bağlan** |
 | Betikleri çalıştırır | **Durum / Onar / Tanı** düğmeleri `app/status.ps1`, `tools/warpheal.ps1`, `tools/tani.ps1` betiklerini çalıştırır, çıktıyı renkli günlüğe akıtır; **İptal** süreç ağacını durdurur |
@@ -340,7 +343,7 @@ Kurulumun sisteme dokunduğu tek yerler: `C:\ProgramData\DiscordTunnel` klasör�
 - Açıksa kapatın: **Ayarlar → Gizlilik ve güvenlik → Windows Güvenliği → Uygulama ve tarayıcı denetimi → Akıllı Uygulama Denetimi → Kapalı**. Uyarı: kapatmak geri alınamaz; Windows'u sıfırlamadan yeniden açılamaz.
 - Birden çok makineye dağıtıyorsanız kalıcı çözüm imzalamaktır: `gui\build.ps1 -Certificate <parmak izi|.pfx>`. Sertifika Microsoft kök programındaki bir CA'dan alınmalı (kendinden imzalı sertifika SAC'ta güvenilmez) ve SAC ECC sertifikaları kabul etmez, RSA kullanın.
 - `tools\sac-check.bat` bu kontrolü yapar; `WarpCord.bat` açılışta çağırır ve kuruluma girmeden uyarır. Arayüz de SAC açıkken üstte şerit gösterir: [görünüm](docs/ui-sac.png).
-- `WarpCord.exe`'yi tek başına masaüstüne kopyalamayın: `dist\WarpCord.exe` olarak `app\` ve `tools\` klasörlerinin yanında kalsın, yoksa betikleri bulamaz.
+- `WarpCord.exe`'yi tek başına kopyalayabilirsin (motoru içindedir); klasik `WarpCord.bat` / `durum.bat` yolunu da kullanacaksan klasörü olduğu gibi taşı. Tek dosya modunda arayüz bunu fark eder: *Elle (WarpCord.bat)* kapanır, not "tek dosya modu" der ([görünüm](docs/ui-standalone.png)).
 
 **Bozulursa?** Koruyucu genelde 5 dakika içinde kendisi düzeltir; ne yaptığını `heal.log` dosyasında görebilirsin. Hemen müdahale için `onar.bat` çalıştır. O da çözmezse `kaldir.bat` çalıştır: görevler, güvenlik duvarı kuralları ve dosyalar silinir; DNS geri alınır; rotalar TUN cihazıyla birlikte kaybolur. Kurulum başarısız olursa da DNS otomatik geri alınır — internetin kopmaz.
 

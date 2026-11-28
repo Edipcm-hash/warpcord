@@ -6,9 +6,16 @@ namespace WarpCord
     /// <summary>Everything the GUI needs to know about where WarpCord lives.</summary>
     internal static class Paths
     {
-        public const string InstallDir = @"C:\ProgramData\DiscordTunnel";
+        private const string InstallDirPath = @"C:\ProgramData\DiscordTunnel";
 
         private static string _repo;
+        private static string _source;
+        private static bool _forceEmbedded;
+
+        public static string InstallDir
+        {
+            get { return InstallDirPath; }
+        }
 
         public static string RepoRoot
         {
@@ -19,24 +26,72 @@ namespace WarpCord
             }
         }
 
+        /// <summary>"repo" (next to the exe), "repo" (recorded by the installer) or "engine".</summary>
+        public static string Source
+        {
+            get
+            {
+                string ignored = RepoRoot;
+                if (ignored == null) return null;
+                return _source;
+            }
+        }
+
+        public static bool IsEmbedded
+        {
+            get { return Source == "engine"; }
+        }
+
         public static void OverrideRepo(string path)
         {
-            if (!string.IsNullOrEmpty(path) && IsRepo(path)) _repo = path;
+            if (!string.IsNullOrEmpty(path) && IsRepo(path))
+            {
+                _repo = path;
+                _source = "repo";
+            }
+        }
+
+        /// <summary>Ignore any real repo and use the engine embedded in the exe (tests, troubleshooting).</summary>
+        public static void ForceEmbedded()
+        {
+            _forceEmbedded = true;
+            _repo = null;
+            _source = null;
         }
 
         private static string DetectRepo()
         {
-            // 1. walk up from the executable: dist\WarpCord.exe -> repo root
-            var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'));
-            for (int depth = 0; dir != null && depth < 8; depth++, dir = dir.Parent)
+            if (!_forceEmbedded)
             {
-                if (IsRepo(dir.FullName)) return dir.FullName;
+                // 1. walk up from the executable: dist\WarpCord.exe -> repo root
+                var dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'));
+                for (int depth = 0; dir != null && depth < 8; depth++, dir = dir.Parent)
+                {
+                    if (IsRepo(dir.FullName))
+                    {
+                        _source = "repo";
+                        return dir.FullName;
+                    }
+                }
+
+                // 2. the installer records the folder it was installed from
+                string recorded = Json.Str(Json.Node(StatePath), "repoPath");
+                if (IsRepo(recorded))
+                {
+                    _source = "repo";
+                    return recorded;
+                }
             }
 
-            // 2. the installer records the folder it was installed from
-            string recorded = Json.Str(Json.Node(StatePath), "repoPath");
-            if (IsRepo(recorded)) return recorded;
+            // 3. the engine embedded in this exe: a lone WarpCord.exe still works
+            string engine = Engine.TryEnsure();
+            if (engine != null)
+            {
+                _source = "engine";
+                return engine;
+            }
 
+            _source = null;
             return null;
         }
 
@@ -74,7 +129,7 @@ namespace WarpCord
             get
             {
                 string repo = RepoRoot;
-                if (repo == null) return null;
+                if (repo == null || IsEmbedded) return null;
                 string bat = Path.Combine(repo, "WarpCord.bat");
                 return File.Exists(bat) ? bat : null;
             }

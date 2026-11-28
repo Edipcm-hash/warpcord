@@ -40,6 +40,7 @@ namespace WarpCord
                 Console.WriteLine(CliOptions.Usage());
                 return 0;
             }
+            if (cli.UseEmbeddedEngine) Paths.ForceEmbedded();
             if (cli.RepoRoot != null) Paths.OverrideRepo(cli.RepoRoot);
             if (cli.Smoke) return Smoke.Run();
             if (!string.IsNullOrEmpty(cli.ExecAction)) return Headless.RunAction(cli.ExecAction);

@@ -81,6 +81,26 @@ $resources = @(
     "/resource:$(Join-Path $src 'Prompt.xaml'),WarpCord.Prompt.xaml"
 )
 
+# --- embedded engine ---------------------------------------------------------
+# The PowerShell engine travels inside the exe, so a lone WarpCord.exe copied to
+# a Desktop still installs/repairs. It is unpacked to
+# %LOCALAPPDATA%\WarpCord\engine\<version>\ on first use (see gui/src/Engine.cs).
+$engineEmbed = @(
+    @{ File = 'app\install.ps1';             Name = 'WarpCord.Engine.app.install.ps1' },
+    @{ File = 'app\status.ps1';              Name = 'WarpCord.Engine.app.status.ps1' },
+    @{ File = 'app\uninstall.ps1';           Name = 'WarpCord.Engine.app.uninstall.ps1' },
+    @{ File = 'tools\warpcore.ps1';          Name = 'WarpCord.Engine.tools.warpcore.ps1' },
+    @{ File = 'tools\warpheal.ps1';          Name = 'WarpCord.Engine.tools.warpheal.ps1' },
+    @{ File = 'tools\tani.ps1';              Name = 'WarpCord.Engine.tools.tani.ps1' },
+    @{ File = 'tools\warpfrag.ps1';          Name = 'WarpCord.Engine.tools.warpfrag.ps1' },
+    @{ File = 'tools\warpfrag\WarpFrag.cs';  Name = 'WarpCord.Engine.tools.warpfrag.WarpFrag.cs' }
+)
+foreach ($entry in $engineEmbed) {
+    $full = Join-Path $root $entry.File
+    if (-not (Test-Path -LiteralPath $full)) { throw "Gomulu motor dosyasi yok: $full" }
+    $resources += "/resource:$full,$($entry.Name)"
+}
+
 $sources = Get-ChildItem -LiteralPath $src -Filter '*.cs' | Sort-Object Name | ForEach-Object { $_.FullName }
 if ($sources.Count -eq 0) { throw "Kaynak dosya yok: $src" }
 

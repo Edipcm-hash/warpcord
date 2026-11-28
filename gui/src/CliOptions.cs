@@ -19,6 +19,7 @@ namespace WarpCord
         public string ExecAction;
         public bool AdvancedPreview;
         public string PromptRender;
+        public bool UseEmbeddedEngine;
         public bool Help;
 
         public static CliOptions Parse(string[] args)
@@ -71,6 +72,9 @@ namespace WarpCord
                     case "--prompt":
                         options.PromptRender = Next(args, ref i, "--prompt");
                         break;
+                    case "--engine":
+                        options.UseEmbeddedEngine = true;
+                        break;
                     case "--help":
                     case "-h":
                     case "/?":
@@ -104,6 +108,7 @@ namespace WarpCord
                    "  WarpCord.exe --render p.png  arayüzü PNG olarak çiz (belge/görsel test)\n" +
                    "      --size 1000x760 --scale 2 --demo --state broken|notinstalled|dpi --repo <klasör>\n" +
                    "  WarpCord.exe --prompt p.png  kurulum yöntemi penceresini PNG olarak çiz\n" +
+                   "      --engine                 (varsa) klasördeki betikleri değil, exe'ye gömülü motoru kullan\n" +
                    "  WarpCord.exe --run install   kurulumu doğrudan başlat (yükseltilmiş kopya için)\n";
         }
     }

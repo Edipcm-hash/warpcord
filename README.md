@@ -45,10 +45,13 @@ Requirements: Windows 10/11 **64-bit** (AMD64 or ARM64), admin rights (the TUN d
 
 `dist\WarpCord.exe` drives the same engine from a single window. No installer, no extra runtime, no Python and no .NET SDK: it is one file running on .NET Framework 4.8, which ships with Windows 10/11.
 
+**It runs on its own.** The PowerShell engine (`install`, `status`, repair, diagnostics, uninstall and the DPI proxy source) is embedded in the exe; on first use it is unpacked to `%LOCALAPPDATA%\WarpCord\engine\<version>\` and run from there. Copying just `WarpCord.exe` to a Desktop still installs, repairs and diagnoses. When the folder is present, the `app\`/`tools\` scripts next to the exe win, and the classic *Elle (WarpCord.bat)* route becomes available.
+
 ![WarpCord window](docs/ui-preview.png)
 
 | What it does | How |
 |---|---|
+| Single file | Carries the engine, XAML and logo (~466 KB); the folder layout still works when you want it |
 | Live status | Mode, endpoint, TUN adapter, `sing-box`/proxy processes, last repair, DNS, Discord API latency and public IP. Process/file state refreshes every 3 s, network checks every 20 s |
 | One button | **Kur ve Bağlan** (install) when absent, **Onar** (repair) when something is broken, **Yeniden Bağlan** (reconnect) when healthy |
 | Runs the scripts | **Durum / Onar / Tanı** run `app/status.ps1`, `tools/warpheal.ps1`, `tools/tani.ps1` and stream their output into the coloured log; **İptal** kills the process tree |
@@ -324,7 +327,7 @@ What the installer touches: `C:\ProgramData\DiscordTunnel` (logs and `heal-state
 - If it is on, turn it off: **Settings → Privacy & security → Windows Security → App & browser control → Smart App Control → Off**. Note: this is irreversible; it cannot be re-enabled without resetting Windows.
 - Distributing to many machines? The permanent fix is signing: `gui\build.ps1 -Certificate <thumbprint|.pfx>`. The certificate must come from a CA in the Microsoft Trusted Root Program (self-signed is not trusted), and SAC does not accept ECC certificates — use RSA.
 - `tools\sac-check.bat` performs the check; `WarpCord.bat` calls it and warns before installing. The GUI shows a banner while SAC is on: [screenshot](docs/ui-sac.png).
-- Do not copy `WarpCord.exe` out on its own (for example to the Desktop): keep `dist\WarpCord.exe` next to the `app\` and `tools\` folders, otherwise it cannot find the scripts.
+- You can copy `WarpCord.exe` on its own (the engine travels inside); move the whole folder only if you also want the classic `WarpCord.bat` / `durum.bat` route. In single-file mode the UI notices: *Elle (WarpCord.bat)* is disabled and the panel says "tek dosya modu" ([screenshot](docs/ui-standalone.png)).
 
 
 **Does it work on Superonline?** That is exactly what v2 is for. `WarpCord.bat` tries WARP first; if Superonline blocks it, the installer switches to the DPI engine automatically and Discord works again. DPI mode does not hide your IP (it is a bypass, not a tunnel); WARP mode does.

@@ -21,7 +21,7 @@ namespace WarpCord
     /// </summary>
     internal static class InstallPrompt
     {
-        public static InstallMethodChoice Show(Window owner)
+        public static InstallMethodChoice Show(Window owner, bool allowManual)
         {
             Grid root;
             Border card = BuildCard(out root);
@@ -48,6 +48,12 @@ namespace WarpCord
             var useApp = (Button)root.FindName("UseAppBtn");
             var useManual = (Button)root.FindName("UseManualBtn");
             var cancel = (Button)root.FindName("CancelBtn");
+
+            if (!allowManual)
+            {
+                useManual.IsEnabled = false;
+                useManual.ToolTip = "Klasik WarpCord.bat bulunamadı (tek dosya modu)";
+            }
 
             useApp.Click += delegate { choice = InstallMethodChoice.App; dialog.DialogResult = true; };
             useManual.Click += delegate { choice = InstallMethodChoice.Manual; dialog.DialogResult = true; };

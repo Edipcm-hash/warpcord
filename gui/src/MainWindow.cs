@@ -30,8 +30,6 @@ namespace WarpCord
 
     internal sealed class MainWindow : Window
     {
-        private const string GuiVersion = "1.2.0";
-
         private readonly Settings _settings;
         private readonly CliOptions _cli;
         private readonly Runner _runner = new Runner();
@@ -290,8 +288,8 @@ namespace WarpCord
 
             SetAdvanced(_settings.Advanced);
 
-            _repoText.Text = Paths.RepoRoot ?? (Paths.Installed ? Paths.InstallDir : "WarpCord klasörü bulunamadı");
-            _versionText.Text = "arayüz " + GuiVersion;
+            _repoText.Text = DescribeEngineSource();
+            _versionText.Text = "arayüz " + AppInfo.Version;
             UpdateAdminUi();
             UpdateSacUi();
 
@@ -418,7 +416,7 @@ namespace WarpCord
 
         private void AskInstallMethod()
         {
-            InstallMethodChoice choice = InstallPrompt.Show(this);
+            InstallMethodChoice choice = InstallPrompt.Show(this, Paths.ManualInstallScript != null);
             if (choice == InstallMethodChoice.Cancel) return;
 
             _settings.InstallMethod = choice == InstallMethodChoice.Manual ? "manual" : "app";
@@ -612,8 +610,8 @@ namespace WarpCord
 
             _updatedText.Text = "son " + DateTime.Now.ToString("HH:mm:ss");
             _versionText.Text = string.IsNullOrEmpty(s.Version)
-                ? "arayüz " + GuiVersion
-                : "WarpCord " + s.Version + " · arayüz " + GuiVersion;
+                ? "arayüz " + AppInfo.Version
+                : "WarpCord " + s.Version + " · arayüz " + AppInfo.Version;
 
             _statusBtn.IsEnabled = !_busy && Paths.StatusScript != null;
             _diagBtn.IsEnabled = !_busy && Paths.DiagnoseScript != null;
@@ -787,7 +785,10 @@ namespace WarpCord
             if (_busy) return;
             string label;
             if (_snap == null) label = "Kontrol ediliyor…";
-            else if (!_snap.Installed) label = ManualInstallSelected ? "Elle Kur (WarpCord.bat)" : "Kur ve Bağlan";
+            else if (!_snap.Installed)
+                label = (ManualInstallSelected && Paths.ManualInstallScript != null)
+                    ? "Elle Kur (WarpCord.bat)"
+                    : "Kur ve Bağlan";
             else if (!_snap.Healthy) label = "Onar";
             else label = "Yeniden Bağlan";
 
@@ -809,12 +810,30 @@ namespace WarpCord
 
         private void SetMethodUi()
         {
-            bool manual = ManualInstallSelected;
+            bool available = Paths.ManualInstallScript != null;
+            if (!available && ManualInstallSelected)
+            {
+                // a lone exe has no WarpCord.bat: fall back to the in-app installer
+                _settings.InstallMethod = "app";
+                if (_methodApp != null) _methodApp.IsChecked = true;
+            }
+
+            bool manual = ManualInstallSelected && available;
+            if (_methodManual != null)
+            {
+                _methodManual.IsEnabled = available && !_busy;
+                _methodManual.ToolTip = available
+                    ? "Klasik kurulum ayrı bir komut penceresinde çalışır"
+                    : "Klasik WarpCord.bat bulunamadı (tek dosya modu)";
+            }
+
             if (_methodNote != null)
             {
-                _methodNote.Text = manual
-                    ? "Kurulum, proje klasöründeki WarpCord.bat ile ayrı bir komut penceresinde çalışır. Bu pencere açık kalır ve durumu izler."
-                    : "Kurulum bu pencerede çalışır; adımları canlı görürsün ve çıktı kaydın içinde kalır.";
+                _methodNote.Text = !available
+                    ? "Klasik WarpCord.bat bulunamadı (tek dosya modu): kurulum ve onarım bu pencerede çalışır."
+                    : (manual
+                        ? "Kurulum, proje klasöründeki WarpCord.bat ile ayrı bir komut penceresinde çalışır. Bu pencere açık kalır ve durumu izler."
+                        : "Kurulum bu pencerede çalışır; adımları canlı görürsün ve çıktı kaydın içinde kalır.");
             }
             if (_manualInstallBtn != null)
                 _manualInstallBtn.Visibility = manual ? Visibility.Visible : Visibility.Collapsed;
@@ -892,7 +911,7 @@ namespace WarpCord
                 StartAction(ActionKind.Heal);
                 return;
             }
-            if (!installed && ManualInstallSelected)
+            if (!installed && ManualInstallSelected && Paths.ManualInstallScript != null)
             {
                 LaunchManualInstall();
                 return;
@@ -1300,6 +1319,14 @@ namespace WarpCord
             }
             try { DragMove(); }
             catch (InvalidOperationException) { }
+        }
+
+        private static string DescribeEngineSource()
+        {
+            string root = Paths.RepoRoot;
+            if (root == null) return "motor bulunamadı (app\\install.ps1 yok)";
+            if (Paths.IsEmbedded) return "gömülü motor · " + root;
+            return root;
         }
 
         private static bool IsInsideButton(DependencyObject source)

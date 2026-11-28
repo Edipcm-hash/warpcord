@@ -35,9 +35,11 @@ namespace WarpCord
                 if (Assets.Logo64.PixelWidth != 64) throw new Exception("64 px logo okunamadı");
                 if (Assets.Logo32.PixelWidth != 32) throw new Exception("32 px logo okunamadı");
             });
-            Check("repo klasörü", delegate
+            Check("motor (klasör veya gömülü)", delegate
             {
-                if (Paths.RepoRoot == null) throw new Exception("app\\install.ps1 bulunamadı");
+                if (Paths.RepoRoot == null) throw new Exception("app\\install.ps1 yok ve gömülü motor açılamadı");
+                if (Paths.IsEmbedded && !Engine.IsComplete(Paths.RepoRoot))
+                    throw new Exception("gömülü motor eksik: " + Paths.RepoRoot);
             });
             Check("betikler", delegate
             {
@@ -64,6 +66,9 @@ namespace WarpCord
                         @"^(?:(?:\d{1,3}\.){3}\d{1,3}:\d{1,5}|\[[0-9A-Fa-f:]+\]:\d{1,5})$"))
                     throw new Exception("geçerli uç reddedildi");
             });
+
+            Info("kaynak", (Paths.IsEmbedded ? "gömülü motor" : "klasör") + " · " + (Paths.RepoRoot ?? "—"));
+            Info("manuel", Paths.ManualInstallScript != null ? "WarpCord.bat var" : "WarpCord.bat yok (tek dosya)");
 
             Console.WriteLine();
             Snapshot snapshot = null;
