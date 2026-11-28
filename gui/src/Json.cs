@@ -33,9 +33,16 @@ namespace WarpCord
         public static object Parse(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
-            int start = text.IndexOf('{');
+
+            // tolerate noise before the payload (script banners, BOM leftovers)
+            int objectStart = text.IndexOf('{');
+            int arrayStart = text.IndexOf('[');
+            int start = objectStart;
+            if (start < 0 || (arrayStart >= 0 && arrayStart < start)) start = arrayStart;
             if (start < 0) return null;
-            try { return Serializer.DeserializeObject(text); }
+
+            string json = start == 0 ? text : text.Substring(start);
+            try { return Serializer.DeserializeObject(json); }
             catch { return null; }
         }
 

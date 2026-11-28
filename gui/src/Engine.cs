@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
@@ -67,6 +68,12 @@ namespace WarpCord
             }
         }
 
+        /// <summary>Manifest resource names the build must embed for the engine.</summary>
+        public static IEnumerable<string> ExpectedResources()
+        {
+            foreach (string relative in Files)
+                yield return "WarpCord.Engine." + relative.Replace('\\', '.');
+        }
         public static bool IsComplete(string root)
         {
             if (string.IsNullOrEmpty(root) || !Directory.Exists(root)) return false;

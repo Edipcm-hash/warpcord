@@ -419,10 +419,7 @@ namespace WarpCord
                 }
             }
 
-            _endpointRows = _endpointRows
-                .OrderByDescending(r => r.Ok)
-                .ThenBy(r => r.Ms <= 0 ? int.MaxValue : r.Ms)
-                .ToList();
+            _endpointRows = Rank(_endpointRows);
 
             _endpointsList.ItemsSource = _endpointRows;
             if (_endpointRows.Count > 0) _endpointsList.SelectedIndex = 0;
@@ -485,7 +482,7 @@ namespace WarpCord
                         _aboutUpdate.Text = _settings.LatestVersion;
                         _aboutLink.Visibility = Visibility.Visible;
 
-                        int comparison = CompareVersions(latest, AppInfo.Version);
+                        int comparison = VersionUtil.Compare(latest, AppInfo.Version);
                         _aboutStatus.Text = comparison > 0
                             ? L10n.F("{0} yayında: {1}", L10n.T("Yeni sürüm var"), name)
                             : L10n.T("Güncel") + " · " + (string.IsNullOrEmpty(name) ? tag : name);
@@ -503,18 +500,6 @@ namespace WarpCord
             }
         }
 
-        private static int CompareVersions(string left, string right)
-        {
-            string[] a = (left ?? "").Split('.');
-            string[] b = (right ?? "").Split('.');
-            for (int i = 0; i < Math.Max(a.Length, b.Length); i++)
-            {
-                int x = i < a.Length && int.TryParse(Regex.Replace(a[i], "[^0-9]", ""), out x) ? x : 0;
-                int y = i < b.Length && int.TryParse(Regex.Replace(b[i], "[^0-9]", ""), out y) ? y : 0;
-                if (x != y) return x.CompareTo(y);
-            }
-            return 0;
-        }
 
         private async void MakeBundle()
         {
@@ -653,6 +638,14 @@ namespace WarpCord
             L10n.Apply(root);
         }
 
+/// <summary>Working endpoints first, then by latency; dead ones last.</summary>
+        internal static List<EndpointRow> Rank(IEnumerable<EndpointRow> rows)
+        {
+            return rows
+                .OrderByDescending(r => r.Ok)
+                .ThenBy(r => r.Ms <= 0 ? int.MaxValue : r.Ms)
+                .ToList();
+        }
         private static void SetChecked(Grid root, string name, bool value)
         {
             var toggle = root.FindName(name) as System.Windows.Controls.Primitives.ToggleButton;
