@@ -28,7 +28,7 @@ namespace WarpCord
         Uninstall
     }
 
-    internal sealed class MainWindow : Window
+    internal sealed partial class MainWindow : Window
     {
         private readonly Settings _settings;
         private readonly CliOptions _cli;
@@ -66,6 +66,16 @@ namespace WarpCord
         private Button _copyBtn;
         private Button _clearBtn;
         private Button _folderBtn;
+        private Button _settingsBtn;
+        private Button _discordBtn;
+        private Border _networkBanner;
+        private TextBlock _networkBannerText;
+        private Button _networkFixBtn;
+        private RadioButton _tabAction;
+        private RadioButton _tabTunnel;
+        private RadioButton _tabRepair;
+        private Sparkline _latencySpark;
+        private TextBlock _sparkLabel;
         private Button _tunnelLogBtn;
         private Button _healLogBtn;
         private Image _titleLogo;
@@ -104,6 +114,7 @@ namespace WarpCord
 
         private ScrollViewer _leftScroll;
         private ConsoleWriter _console;
+        private LogPane _log;
         private Snapshot _snap;
         private bool _busy;
         private bool _probing;
@@ -119,6 +130,7 @@ namespace WarpCord
             BuildWindow();
             BindElements();
             _console = new ConsoleWriter(_consoleBox);
+            _log = new LogPane(_console, _consoleEmpty);
             InitRows();
             LoadSettingsIntoUi();
             AttachEvents();
@@ -133,6 +145,7 @@ namespace WarpCord
             Closing += OnClosing;
             StateChanged += OnStateChanged;
             _initializing = false;
+            InitLanguage();
         }
 
         // ============================================================ construction
@@ -234,6 +247,16 @@ namespace WarpCord
             _repoText = N<TextBlock>("RepoText");
             _versionText = N<TextBlock>("VersionText");
             _folderBtn = N<Button>("FolderBtn");
+            _settingsBtn = N<Button>("SettingsBtn");
+            _discordBtn = N<Button>("DiscordBtn");
+            _networkBanner = N<Border>("NetworkBanner");
+            _networkBannerText = N<TextBlock>("NetworkBannerText");
+            _networkFixBtn = N<Button>("NetworkFixBtn");
+            _tabAction = N<RadioButton>("TabAction");
+            _tabTunnel = N<RadioButton>("TabTunnel");
+            _tabRepair = N<RadioButton>("TabRepair");
+            _latencySpark = N<Sparkline>("LatencySpark");
+            _sparkLabel = N<TextBlock>("SparkLabel");
             _tunnelLogBtn = N<Button>("TunnelLogBtn");
             _healLogBtn = N<Button>("HealLogBtn");
 
@@ -243,15 +266,15 @@ namespace WarpCord
 
         private void InitRows()
         {
-            AddRow("mode", "Mod");
-            AddRow("endpoint", "Uç");
+            AddRow("mode", L10n.T("Mod"));
+            AddRow("endpoint", L10n.T("Uç"));
             AddRow("tun", "TUN");
             AddRow("singbox", "sing-box");
             AddRow("proxy", "Proxy");
-            AddRow("heal", "Onarım");
+            AddRow("heal", L10n.T("Onarım"));
             AddRow("dns", "DNS");
             AddRow("api", "Discord API");
-            AddRow("ip", "Dış IP");
+            AddRow("ip", L10n.T("Dış IP"));
             _statsList.ItemsSource = _rows;
         }
 
@@ -284,7 +307,7 @@ namespace WarpCord
             _keepDns.IsChecked = _settings.KeepDns;
             _endpoint.Text = _settings.Endpoint ?? "";
             _autoscroll.IsChecked = _settings.Autoscroll;
-            _console.Autoscroll = _settings.Autoscroll;
+            _log.Autoscroll = _settings.Autoscroll;
 
             SetAdvanced(_settings.Advanced);
 
@@ -317,6 +340,12 @@ namespace WarpCord
             _clearBtn.Click += Clear_Click;
             _cancelBtn.Click += Cancel_Click;
             _folderBtn.Click += Folder_Click;
+            _settingsBtn.Click += Settings_Click;
+            _discordBtn.Click += DiscordRestart_Click;
+            _networkFixBtn.Click += NetworkFix_Click;
+            _tabAction.Checked += delegate { SetLogTab(LogTab.Action); };
+            _tabTunnel.Checked += delegate { SetLogTab(LogTab.Tunnel); };
+            _tabRepair.Checked += delegate { SetLogTab(LogTab.Repair); };
             _tunnelLogBtn.Click += TunnelLog_Click;
             _healLogBtn.Click += HealLog_Click;
             _adminFixBtn.Click += AdminFix_Click;
@@ -346,7 +375,7 @@ namespace WarpCord
             {
                 Dispatcher.BeginInvoke(new Action(delegate
                 {
-                    _console.Write(line);
+                    _log.Write(line);
                     SyncEmpty();
                 }));
             };
@@ -389,6 +418,8 @@ namespace WarpCord
                 return;
             }
 
+            InitShell();
+            L10n.Apply(_root);
             _timer.Start();
             _netTimer.Start();
 
@@ -432,6 +463,7 @@ namespace WarpCord
         private void OnTimerTick(object sender, EventArgs e)
         {
             if (_busy || _probing) return;
+            if (_log != null) _log.RefreshFromFiles(Paths.TunnelLogPath, Paths.HealLogPath);
             Task ignore = ProbeAsync(false, false);
         }
 
@@ -452,6 +484,7 @@ namespace WarpCord
                 if (_cli.AdvancedPreview) SetAdvanced(true);
 
                 await ProbeAsync(true, true);
+                L10n.Apply(_root);
                 if (!string.IsNullOrEmpty(_cli.PreviewState) && _snap != null)
                     ApplySnapshot(PreviewState(_snap, _cli.PreviewState));
                 await Task.Delay(80);
@@ -474,7 +507,7 @@ namespace WarpCord
             string[] lines = Prober.Tail(Paths.InstallLogPath, 44);
             if (lines.Length == 0)
             {
-                _console.Write("Örnek günlük bulunamadı (install.log yok).", Palette.Faint, false);
+                _log.Write("Örnek günlük bulunamadı (install.log yok).", Palette.Faint, false);
                 SyncEmpty();
                 return;
             }
@@ -488,7 +521,7 @@ namespace WarpCord
                     trimmed.StartsWith("Set-Cookie:") || trimmed.StartsWith("Via:") ||
                     trimmed.StartsWith("CF-") || trimmed.StartsWith("Server:"))
                     continue;
-                _console.Write(new LogLine(Runner.Classify(line), line));
+                _log.Write(new LogLine(Runner.Classify(line), line));
             }
             SyncEmpty();
         }
@@ -588,7 +621,7 @@ namespace WarpCord
             {
                 if (_snap == null) _snap = new Snapshot();
                 _snap.Error = ex.Message;
-                _console.Write("Durum okunamadı: " + ex.Message, Palette.Red, false);
+                _log.Write("Durum okunamadı: " + ex.Message, Palette.Red, false);
                 SyncEmpty();
             }
             finally
@@ -608,10 +641,13 @@ namespace WarpCord
 
             UpdateRows(s);
 
-            _updatedText.Text = "son " + DateTime.Now.ToString("HH:mm:ss");
-            _versionText.Text = string.IsNullOrEmpty(s.Version)
+            _updatedText.Text = L10n.T("son") + " " + DateTime.Now.ToString("HH:mm:ss");
+            if (_latencySpark != null && s.ApiOk && s.ApiMs > 0) _latencySpark.Add(s.ApiMs);
+            UpdateTray(s);
+            MaybeAutoHeal(s);
+            _versionText.Text = L10n.P(string.IsNullOrEmpty(s.Version)
                 ? "arayüz " + AppInfo.Version
-                : "WarpCord " + s.Version + " · arayüz " + AppInfo.Version;
+                : "WarpCord " + s.Version + " · arayüz " + AppInfo.Version);
 
             _statusBtn.IsEnabled = !_busy && Paths.StatusScript != null;
             _diagBtn.IsEnabled = !_busy && Paths.DiagnoseScript != null;
@@ -623,25 +659,25 @@ namespace WarpCord
 
         private void StateNotInstalled(Snapshot s)
         {
-            SetPill("KURULU DEĞİL", Color.FromRgb(0x66, 0x70, 0x8C));
-            _statusDetail.Text =
+            SetPill(L10n.T("KURULU DEĞİL"), Color.FromRgb(0x66, 0x70, 0x8C));
+            _statusDetail.Text = L10n.P(
                 "WarpCord bu bilgisayarda kurulu değil. Kurulum: ücretsiz WARP cihazı kaydedilir, uçlar denenir, " +
-                "çalışan motor seçilir ve tünel açılır.\nİlk kurulum 1–2 dakika sürer.";
+                "çalışan motor seçilir ve tünel açılır.\nİlk kurulum 1–2 dakika sürer.");
         }
 
         private void StateHealthy(Snapshot s)
         {
-            SetPill("SAĞLIKLI", Color.FromRgb(0x34, 0xD3, 0x99));
+            SetPill(L10n.T("SAĞLIKLI"), Color.FromRgb(0x34, 0xD3, 0x99));
             string endpoint = s.DpiMode
                 ? " · proxy portu " + s.FragPort
                 : (string.IsNullOrEmpty(s.EndpointAddress) ? "" : " · uç " + s.EndpointAddress + ":" + s.EndpointPort);
-            _statusDetail.Text = s.ModeName + endpoint + "\nDiscord API " + s.ApiMs + " ms · DNS temiz · " +
-                                 (s.TunUp ? "TUN ayakta" : "TUN görünmüyor");
+            _statusDetail.Text = L10n.P( s.ModeName + endpoint + "\nDiscord API " + s.ApiMs + " ms · DNS temiz · " +
+                                 (s.TunUp ? "TUN ayakta" : "TUN görünmüyor"));
         }
 
         private void StateProblem(Snapshot s)
         {
-            SetPill("SORUN VAR", Color.FromRgb(0xF8, 0x71, 0x71));
+            SetPill(L10n.T("SORUN VAR"), Color.FromRgb(0xF8, 0x71, 0x71));
             var reasons = new List<string>();
             if (!s.SingBoxRunning) reasons.Add("sing-box çalışmıyor");
             if (s.DpiMode && !s.FragRunning) reasons.Add("DPI proxy çalışmıyor");
@@ -652,8 +688,8 @@ namespace WarpCord
             if (reasons.Count == 0) reasons.Add("tünel doğrulanamadı");
             if (reasons.Count > 3) reasons.RemoveRange(3, reasons.Count - 3);
 
-            _statusDetail.Text = "Sorun: " + string.Join(", ", reasons.ToArray()) +
-                                 ".\nOnar düğmesi bozulan parçayı kendisi düzeltir.";
+            _statusDetail.Text = L10n.P( "Sorun: " + string.Join(", ", reasons.ToArray()) +
+                                 ".\nOnar düğmesi bozulan parçayı kendisi düzeltir.");
         }
 
         private void SetPill(string text, Color color)
@@ -754,7 +790,7 @@ namespace WarpCord
         {
             StatRow row;
             if (!_index.TryGetValue(key, out row)) return;
-            row.Value = value;
+            row.Value = L10n.P(value);
             row.Dot = dot ?? Palette.Faint;
         }
 
@@ -784,13 +820,13 @@ namespace WarpCord
         {
             if (_busy) return;
             string label;
-            if (_snap == null) label = "Kontrol ediliyor…";
+            if (_snap == null) label = L10n.T("Kontrol ediliyor…");
             else if (!_snap.Installed)
                 label = (ManualInstallSelected && Paths.ManualInstallScript != null)
-                    ? "Elle Kur (WarpCord.bat)"
-                    : "Kur ve Bağlan";
-            else if (!_snap.Healthy) label = "Onar";
-            else label = "Yeniden Bağlan";
+                    ? L10n.T("Elle Kur (WarpCord.bat)")
+                    : L10n.T("Kur ve Bağlan");
+            else if (!_snap.Healthy) label = L10n.T("Onar");
+            else label = L10n.T("Yeniden Bağlan");
 
             _primary.Content = label;
             if (label == "Onar")
@@ -857,12 +893,12 @@ namespace WarpCord
         private void LaunchManualInstall()
         {
             string bat = Paths.ManualInstallScript;
-            _console.Separator("Elle kurulum · " + DateTime.Now.ToString("HH:mm:ss"));
+            _log.Separator("Elle kurulum · " + DateTime.Now.ToString("HH:mm:ss"));
             if (bat == null)
             {
-                _console.Write("  WarpCord.bat bulunamadı. WarpCord.exe dosyasını proje klasörünün içinden çalıştırın.",
+                _log.Write("  WarpCord.bat bulunamadı. WarpCord.exe dosyasını proje klasörünün içinden çalıştırın.",
                     Palette.Red, false);
-                _console.Write("  Aranan klasör: " +
+                _log.Write("  Aranan klasör: " +
                                (Paths.RepoRoot ?? "(bulunamadı, --repo ile belirtebilirsiniz)"), Palette.Faint, false);
                 SyncEmpty();
                 return;
@@ -876,9 +912,9 @@ namespace WarpCord
                 info.WorkingDirectory = Paths.RepoRoot;
                 Process.Start(info);
 
-                _console.Write("  WarpCord.bat ayrı bir pencerede başlatıldı:", Palette.Cyan, false);
-                _console.Write("  " + bat, Palette.Faint, false);
-                _console.Write("  Kurulum bitince durum kendiliğinden yenilenir; istersen Durum düğmesine bas.",
+                _log.Write("  WarpCord.bat ayrı bir pencerede başlatıldı:", Palette.Cyan, false);
+                _log.Write("  " + bat, Palette.Faint, false);
+                _log.Write("  Kurulum bitince durum kendiliğinden yenilenir; istersen Durum düğmesine bas.",
                     Palette.Faint, false);
                 SyncEmpty();
 
@@ -894,7 +930,7 @@ namespace WarpCord
             }
             catch (Win32Exception ex)
             {
-                _console.Write(ex.NativeErrorCode == 1223
+                _log.Write(ex.NativeErrorCode == 1223
                         ? "  Yönetici izni verilmedi; elle kurulum başlatılmadı."
                         : "  WarpCord.bat başlatılamadı: " + ex.Message,
                     Palette.Amber, false);
@@ -962,8 +998,8 @@ namespace WarpCord
             string endpoint = (_endpoint.Text ?? "").Trim();
             if (endpoint.Length > 0 && !IsValidEndpoint(endpoint))
             {
-                _console.Separator("Uç adresi geçersiz");
-                _console.Write("  '" + endpoint + "' bir uç değil. Beklenen biçim: 162.159.192.1:2408",
+                _log.Separator("Uç adresi geçersiz");
+                _log.Write("  '" + endpoint + "' bir uç değil. Beklenen biçim: 162.159.192.1:2408",
                     Palette.Red, false);
                 SyncEmpty();
                 _endpoint.Focus();
@@ -976,13 +1012,13 @@ namespace WarpCord
             string title;
             if (!BuildAction(kind, endpoint, out script, out switches, out title)) return;
 
-            _console.Separator(title + " · " + DateTime.Now.ToString("HH:mm:ss"));
-            _console.Write("$ " + System.IO.Path.GetFileName(script) + " " + switches, Palette.Faint, false);
+            _log.Separator(title + " · " + DateTime.Now.ToString("HH:mm:ss"));
+            _log.Write("$ " + System.IO.Path.GetFileName(script) + " " + switches, Palette.Faint, false);
             SyncEmpty();
 
             if (!_runner.Start(script, switches, Paths.RepoRoot ?? Paths.InstallDir))
             {
-                _console.Write("Başlatılamadı.", Palette.Red, false);
+                _log.Write("Başlatılamadı.", Palette.Red, false);
                 SyncEmpty();
                 return;
             }
@@ -1007,10 +1043,10 @@ namespace WarpCord
 
         private void ScriptMissing(string relative)
         {
-            _console.Separator("Betik bulunamadı");
-            _console.Write("  " + relative + " yok. WarpCord.exe dosyasını proje klasörünün içinden çalıştırın.",
+            _log.Separator("Betik bulunamadı");
+            _log.Write("  " + relative + " yok. WarpCord.exe dosyasını proje klasörünün içinden çalıştırın.",
                 Palette.Red, false);
-            _console.Write("  Aranan klasör: " +
+            _log.Write("  Aranan klasör: " +
                            (Paths.RepoRoot ?? "(bulunamadı, --repo ile belirtebilirsiniz)"), Palette.Faint, false);
             SyncEmpty();
         }
@@ -1064,7 +1100,7 @@ namespace WarpCord
                 _runPill.Background = new SolidColorBrush(Color.FromArgb(0x16, 0x22, 0xD3, 0xEE));
                 _runPill.BorderBrush = new SolidColorBrush(Color.FromArgb(0x38, 0x22, 0xD3, 0xEE));
                 _runStepHost.Visibility = Visibility.Visible;
-                _runStep.Text = title + " başladı…";
+                _runStep.Text = title + " …";
                 _cancelBtn.Visibility = Visibility.Visible;
                 if (_spin != null) { try { _spin.Begin(this, true); } catch { } }
             }
@@ -1080,8 +1116,8 @@ namespace WarpCord
         private void OnRunFinished(int code, TimeSpan elapsed)
         {
             bool ok = code == 0;
-            _console.Write("", null, false);
-            _console.Write((ok ? "✓ " : "✗ ") + "İşlem " + (ok ? "tamamlandı" : "tamamlanamadı") +
+            _log.Write("", null, false);
+            _log.Write((ok ? "✓ " : "✗ ") + "İşlem " + (ok ? "tamamlandı" : "tamamlanamadı") +
                            " · kod " + code + " · " + FormatDuration(elapsed),
                 ok ? Palette.Green : Palette.Red, true);
             SyncEmpty();
@@ -1176,21 +1212,21 @@ namespace WarpCord
         {
             if (_initializing) return;
             _settings.Autoscroll = _autoscroll.IsChecked == true;
-            _console.Autoscroll = _settings.Autoscroll;
+            _log.Autoscroll = _settings.Autoscroll;
             if (_settings.Autoscroll) _consoleBox.ScrollToEnd();
         }
 
         // ================================================================ console
         private void SyncEmpty()
         {
-            _consoleEmpty.Visibility = _console.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
+            _consoleEmpty.Visibility = _log.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                Clipboard.SetText(_console.Dump());
+                Clipboard.SetText(_log.Dump());
                 _runPill.Visibility = Visibility.Visible;
                 _runPillText.Text = "kopyalandı";
                 _runPillText.Foreground = Palette.Dim;
@@ -1199,13 +1235,13 @@ namespace WarpCord
             }
             catch (Exception ex)
             {
-                _console.Write("Panoya kopyalanamadı: " + ex.Message, Palette.Red, false);
+                _log.Write("Panoya kopyalanamadı: " + ex.Message, Palette.Red, false);
             }
         }
 
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
-            _console.Clear();
+            _log.Clear();
             SyncEmpty();
         }
 
@@ -1219,7 +1255,7 @@ namespace WarpCord
             }
             catch (Exception ex)
             {
-                _console.Write("Klasör açılamadı: " + ex.Message, Palette.Red, false);
+                _log.Write("Klasör açılamadı: " + ex.Message, Palette.Red, false);
             }
         }
 
@@ -1237,8 +1273,8 @@ namespace WarpCord
         {
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
             {
-                _console.Separator("Günlük bulunamadı");
-                _console.Write("  " + (path ?? "(yol yok)"), Palette.Faint, false);
+                _log.Separator("Günlük bulunamadı");
+                _log.Write("  " + (path ?? "(yol yok)"), Palette.Faint, false);
                 SyncEmpty();
                 return;
             }
@@ -1248,7 +1284,7 @@ namespace WarpCord
             }
             catch (Exception ex)
             {
-                _console.Write("Günlük açılamadı: " + ex.Message, Palette.Red, false);
+                _log.Write("Günlük açılamadı: " + ex.Message, Palette.Red, false);
                 SyncEmpty();
             }
         }
@@ -1342,6 +1378,11 @@ namespace WarpCord
         private void OnStateChanged(object sender, EventArgs e)
         {
             bool maximized = WindowState == WindowState.Maximized;
+            if (!_renderMode && WindowState == WindowState.Minimized && _settings.MinimizeToTray &&
+                _tray != null && _tray.Visible)
+            {
+                Hide();
+            }
             if (_rootBorder != null)
             {
                 _rootBorder.BorderThickness = maximized ? new Thickness(0) : new Thickness(1);
@@ -1360,6 +1401,18 @@ namespace WarpCord
             if (_renderMode)
             {
                 SingleInstance.Release();
+                return;
+            }
+
+            if (!_exiting && !_renderMode && _tray != null && _tray.Visible && _settings.MinimizeToTray)
+            {
+                e.Cancel = true;
+                Hide();
+                if (!_trayHintShown)
+                {
+                    _trayHintShown = true;
+                    _tray.Notify("WarpCord", L10n.T("Tepside çalış"), false);
+                }
                 return;
             }
 
@@ -1384,6 +1437,7 @@ namespace WarpCord
             }
             _settings.Maximized = WindowState == WindowState.Maximized;
             _settings.Save();
+            DestroyTray();
             SingleInstance.Release();
         }
     }

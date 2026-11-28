@@ -153,8 +153,47 @@ namespace WarpCord
             }
         }
 
-        public static string SettingsPath { get { return Path.Combine(AppDataDir, "ui.json"); } }
-        public static string CrashLogPath { get { return Path.Combine(AppDataDir, "crash.log"); } }
+        /// <summary>The folder the exe lives in (used for portable mode and the engine).</summary>
+        public static string AppDir
+        {
+            get { return AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'); }
+        }
+
+        private static bool? _portable;
+
+        /// <summary>Portable: settings and the engine live next to the exe ("portable.txt").</summary>
+        public static bool IsPortable
+        {
+            get
+            {
+                if (_portable.HasValue) return _portable.Value;
+                bool portable = false;
+                try { portable = File.Exists(Path.Combine(AppDir, "portable.txt")); }
+                catch { }
+                _portable = portable;
+                return portable;
+            }
+        }
+
+        public static string SettingsPath
+        {
+            get
+            {
+                return IsPortable
+                    ? Path.Combine(AppDir, "ui.json")
+                    : Path.Combine(AppDataDir, "ui.json");
+            }
+        }
+
+        public static string CrashLogPath
+        {
+            get
+            {
+                return IsPortable
+                    ? Path.Combine(AppDir, "crash.log")
+                    : Path.Combine(AppDataDir, "crash.log");
+            }
+        }
 
         public static string PowerShell
         {

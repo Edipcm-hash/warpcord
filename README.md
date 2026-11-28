@@ -19,15 +19,21 @@ Windows 10/11 (64-bit), admin rights and internet are enough. **No Python, no .N
 
 ## Desktop app
 
-`dist\WarpCord.exe` — one file (~466 KB) with the engine inside; install, repair and status in a single window.
+`dist\WarpCord.exe` — one file (~541 KB) with the engine inside; install, repair and status in a single window.
 
 ![WarpCord window](docs/ui-preview.png)
 
-- **Live status:** mode, endpoint, TUN, processes, last repair, DNS, Discord API latency, public IP.
+- **Live status:** mode, endpoint, TUN, processes, last repair, DNS, Discord API latency (mini graph), public IP.
 - **One button:** *Kur ve Bağlan* when absent, *Onar* when broken, *Yeniden Bağlan* when healthy.
-- **Coloured log:** Durum / Onar / Tanı output streams in; *İptal* kills the process tree.
+- **Tray icon:** status colour plus a notification when the tunnel drops; minimises to the tray.
+- **Log tabs:** Action / Tunnel (`tunnel.log`) / Repair (`heal.log`), live.
+- **Settings window:** language (Turkish/English), tray and notifications, automatic repair, **Readiness** check (SAC/WDAC/Defender/policy), **Endpoints** comparison, update check and diagnostics bundle.
+- **Restart Discord** (status bar): the "fully quit and reopen" step after an install, in one click.
+- **Network changed banner:** after Wi-Fi → cable it offers to refresh DNS.
 - **Elevation:** the window opens unelevated and escalates through UAC only for actions.
-- **Standalone:** copying `WarpCord.exe` on its own works; the engine is unpacked to `%LOCALAPPDATA%\WarpCord\engine\<version>\` on first use.
+- **Standalone:** copying `WarpCord.exe` on its own works; the engine is unpacked to `%LOCALAPPDATA%\WarpCord\engine\<version>\` on first use. Drop a `portable.txt` next to it to keep settings and the engine beside the exe.
+
+![Settings](docs/ui-settings.png)
 
 ### Two install routes
 
@@ -49,7 +55,7 @@ gui\build.ps1                    :: dist\WarpCord.exe
 gui\build.ps1 -Shortcut -Smoke   :: desktop shortcut + smoke test
 ```
 
-Other states: [problem](docs/ui-broken.png) · [not installed](docs/ui-empty.png) · [DPI engine](docs/ui-dpi.png) · [advanced panel](docs/ui-advanced.png) · [manual install](docs/ui-manual.png) · [single file](docs/ui-standalone.png) · [SAC warning](docs/ui-sac.png)
+Other states: [problem](docs/ui-broken.png) · [not installed](docs/ui-empty.png) · [DPI engine](docs/ui-dpi.png) · [advanced panel](docs/ui-advanced.png) · [manual install](docs/ui-manual.png) · [single file](docs/ui-standalone.png) · [SAC warning](docs/ui-sac.png) · [English UI](docs/ui-en.png)
 
 ## Two engines
 
@@ -145,7 +151,7 @@ What the installer touches: `C:\ProgramData\DiscordTunnel` (logs), scheduled tas
 - **v2.0** — one click, no Python, endpoint auto-selection, DPI engine when WARP is blocked.
 - **v2.5** — guardian: checks and repairs every 5 minutes.
 - **v3.0** — one click on a clean Windows 11: MOTW, GPO, Defender, SAC, WDAC walls + `tani.bat`.
-- **GUI 1.x** — desktop app with logo, install-route choice, single file.
+- **GUI 4.0** — tray icon and notifications, log tabs, readiness/endpoint tools, English UI, automatic repair, portable mode, single file.
 
 Full notes: [CHANGELOG.md](CHANGELOG.md)
 

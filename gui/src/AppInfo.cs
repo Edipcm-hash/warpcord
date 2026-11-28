@@ -6,6 +6,6 @@ namespace WarpCord
     internal static class AppInfo
     {
         public const string Name = "WarpCord";
-        public const string Version = "1.3.0";
+        public const string Version = "4.0.0";
     }
 }

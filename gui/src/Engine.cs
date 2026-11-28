@@ -23,7 +23,9 @@ namespace WarpCord
             @"tools\warpheal.ps1",
             @"tools\tani.ps1",
             @"tools\warpfrag.ps1",
-            @"tools\warpfrag\WarpFrag.cs"
+            @"tools\warpfrag\WarpFrag.cs",
+            @"tools\warpreadiness.ps1",
+            @"tools\warpendpoints.ps1"
         };
 
         private static string _root;
@@ -37,9 +39,11 @@ namespace WarpCord
 
             try
             {
-                string parent = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "WarpCord", "engine");
+                string parent = Paths.IsPortable
+                    ? System.IO.Path.Combine(Paths.AppDir, "engine")
+                    : System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "WarpCord", "engine");
                 string root = System.IO.Path.Combine(parent, AppInfo.Version);
 
                 if (IsComplete(root))

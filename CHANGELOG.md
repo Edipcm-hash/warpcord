@@ -2,6 +2,21 @@
 
 Sürüm notlarının depodaki kopyası. Ayrıntılı sürümler: [v3.0.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v3.0.0) · [v2.5.0](https://github.com/Edipcm-hash/warpcord/releases/tag/v2.5.0)
 
+## Arayüz 4.0 — tepsi, günlük sekmeleri, hazırlık ve uç araçları
+
+- **Tepsi simgesi**: durum rengi (yeşil/amber/kırmızı/mavi), sağ tık menüsü (*aç / onar / çıkış*), tünel düşünce bildirim; küçültünce tepsiye iner.
+- **Günlük sekmeleri**: İşlem / Tünel (`tunnel.log`) / Onarım (`heal.log`), renk kodlu ve canlı; boş sekme için açıklama.
+- **Ayarlar penceresi** (dişli): dil Türkçe/İngilizce, tepsi-bildirim-otomatik onarım anahtarları, taşınabilir mod bilgisi.
+- **Hazırlık denetimi**: `tools/warpreadiness.ps1` → SAC, WDAC/UMCI, Defender/ASR, CFA, politika, MOTW; satır satır sonuç ve uyarı.
+- **Uç karşılaştırma**: `tools/warpendpoints.ps1` her adayı Discord API'sine gerçek istekle dener; tablo + *en iyisini kullan* / *seçileni kullan*.
+- **Sürüm denetimi** (GitHub API) ve **tanı paketi** (`tani.ps1 -Bundle` → zip'i açar).
+- **Discord'u yeniden başlat**: süreçleri kapatıp `Update.exe --processStart Discord.exe` ile açar.
+- **Ağ değişti uyarısı**: `NetworkChange` olayı → "Yeniden Bağlan" şeridi.
+- **Otomatik onarım**: sorun görüldüğünde (3 dakika soğuma ile) onarımı kendisi tetikler.
+- **API gecikme grafiği**: son 30 ölçümün mini çizgisi.
+- **Taşınabilir mod**: exe yanında `portable.txt` → ayarlar ve motor exe'nin yanında.
+- Motor yardımcıları gömülü sete eklendi (10 dosya); exe 541 KB. Doğrulama: tarama (8/8), `--render`/`--settings`/`--prompt`, canlı açılış + tepsi, İngilizce arayüz render'ı.
+
 ## Arayüz 1.3 — tek dosya
 
 - Motor (install / status / onar / tanı / kaldır + DPI kaynağı) exe'ye gömüldü; ilk açılışta `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` altına açılır (~163 KB, exe 466 KB).

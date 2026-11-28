@@ -64,6 +64,8 @@ $frameworkDir = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $references = @(
     (Join-Path $frameworkDir 'System.dll'),
     (Join-Path $frameworkDir 'System.Core.dll'),
+    (Join-Path $frameworkDir 'System.Drawing.dll'),
+    (Join-Path $frameworkDir 'System.Windows.Forms.dll'),
     (Get-AssemblyPath 'PresentationFramework'),
     (Get-AssemblyPath 'PresentationCore'),
     (Get-AssemblyPath 'WindowsBase'),
@@ -78,7 +80,8 @@ $resources = @(
     "/resource:$(Join-Path $assets 'warpcord-32.png'),WarpCord.Assets.warpcord-32.png",
     "/resource:$(Join-Path $src 'Theme.xaml'),WarpCord.Theme.xaml",
     "/resource:$(Join-Path $src 'MainWindow.xaml'),WarpCord.MainWindow.xaml",
-    "/resource:$(Join-Path $src 'Prompt.xaml'),WarpCord.Prompt.xaml"
+    "/resource:$(Join-Path $src 'Prompt.xaml'),WarpCord.Prompt.xaml",
+    "/resource:$(Join-Path $src 'SettingsWindow.xaml'),WarpCord.SettingsWindow.xaml"
 )
 
 # --- embedded engine ---------------------------------------------------------
@@ -93,7 +96,9 @@ $engineEmbed = @(
     @{ File = 'tools\warpheal.ps1';          Name = 'WarpCord.Engine.tools.warpheal.ps1' },
     @{ File = 'tools\tani.ps1';              Name = 'WarpCord.Engine.tools.tani.ps1' },
     @{ File = 'tools\warpfrag.ps1';          Name = 'WarpCord.Engine.tools.warpfrag.ps1' },
-    @{ File = 'tools\warpfrag\WarpFrag.cs';  Name = 'WarpCord.Engine.tools.warpfrag.WarpFrag.cs' }
+    @{ File = 'tools\warpfrag\WarpFrag.cs';  Name = 'WarpCord.Engine.tools.warpfrag.WarpFrag.cs' },
+    @{ File = 'tools\warpreadiness.ps1';     Name = 'WarpCord.Engine.tools.warpreadiness.ps1' },
+    @{ File = 'tools\warpendpoints.ps1';     Name = 'WarpCord.Engine.tools.warpendpoints.ps1' }
 )
 foreach ($entry in $engineEmbed) {
     $full = Join-Path $root $entry.File

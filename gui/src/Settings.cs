@@ -14,6 +14,13 @@ namespace WarpCord
         public string Endpoint = "";
         public string InstallMethod = "app";
         public bool AskedInstallMethod;
+        public string Language = "tr";
+        public bool AutoHeal = true;
+        public bool TrayEnabled = true;
+        public bool Notifications = true;
+        public bool MinimizeToTray;
+        public string LastVersionCheck = "";
+        public string LatestVersion = "";
         public bool Advanced;
         public bool Autoscroll = true;
         public double Width = 1000;
@@ -37,6 +44,14 @@ namespace WarpCord
             string method = Json.Str(node, "installMethod");
             if (method == "app" || method == "manual") settings.InstallMethod = method;
             settings.AskedInstallMethod = Json.Bool(node, false, "askedInstallMethod");
+            string language = Json.Str(node, "language");
+            if (language == "tr" || language == "en") settings.Language = language;
+            settings.AutoHeal = Json.Bool(node, true, "autoHeal");
+            settings.TrayEnabled = Json.Bool(node, true, "trayEnabled");
+            settings.Notifications = Json.Bool(node, true, "notifications");
+            settings.MinimizeToTray = Json.Bool(node, false, "minimizeToTray");
+            settings.LastVersionCheck = Json.Str(node, "lastVersionCheck") ?? "";
+            settings.LatestVersion = Json.Str(node, "latestVersion") ?? "";
             settings.Advanced = Json.Bool(node, false, "advanced");
             settings.Autoscroll = Json.Bool(node, true, "autoscroll");
             settings.Width = Json.Int(node, 1000, "width");
@@ -61,6 +76,13 @@ namespace WarpCord
                     { "endpoint", Endpoint ?? "" },
                     { "installMethod", InstallMethod ?? "app" },
                     { "askedInstallMethod", AskedInstallMethod },
+                    { "language", Language ?? "tr" },
+                    { "autoHeal", AutoHeal },
+                    { "trayEnabled", TrayEnabled },
+                    { "notifications", Notifications },
+                    { "minimizeToTray", MinimizeToTray },
+                    { "lastVersionCheck", LastVersionCheck ?? "" },
+                    { "latestVersion", LatestVersion ?? "" },
                     { "advanced", Advanced },
                     { "autoscroll", Autoscroll },
                     { "width", (int)Math.Round(Width) },

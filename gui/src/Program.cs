@@ -98,6 +98,21 @@ namespace WarpCord
                 }
             }
 
+            if (!string.IsNullOrEmpty(cli.SettingsRender))
+            {
+                try
+                {
+                    SettingsWindow.RenderTo(cli.SettingsRender, 1);
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    CrashLog.Write(ex);
+                    Console.Error.WriteLine(ex.Message);
+                    return 5;
+                }
+            }
+
             MainWindow window;
             try
             {

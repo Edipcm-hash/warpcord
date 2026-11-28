@@ -19,15 +19,21 @@ Windows 10/11 (64-bit), yönetici hakkı ve internet yeterli. **Python ve .NET S
 
 ## Masaüstü uygulaması
 
-`dist\WarpCord.exe` — tek dosya (~466 KB), motoru içinde taşır; kurulum, onarım ve durum tek pencereden.
+`dist\WarpCord.exe` — tek dosya (~541 KB), motoru içinde taşır; kurulum, onarım ve durum tek pencereden.
 
 ![WarpCord arayüzü](docs/ui-preview.png)
 
-- **Canlı durum:** mod, uç, TUN, süreçler, son onarım, DNS, Discord API gecikmesi, dış IP.
+- **Canlı durum:** mod, uç, TUN, süreçler, son onarım, DNS, Discord API gecikmesi (mini grafik), dış IP.
 - **Tek düğme:** kurulu değilse *Kur ve Bağlan*, sorun varsa *Onar*, sağlıklıysa *Yeniden Bağlan*.
-- **Renkli günlük:** Durum / Onar / Tanı çıktısı akar; *İptal* süreç ağacını durdurur.
+- **Tepsi simgesi:** durum rengi + tünel düşünce bildirim; küçültünce tepsiye iner.
+- **Günlük sekmeleri:** İşlem / Tünel (`tunnel.log`) / Onarım (`heal.log`) — canlı akar.
+- **Ayarlar penceresi:** dil (Türkçe/İngilizce), tepsi ve bildirimler, otomatik onarım, **Hazırlık** denetimi (SAC/WDAC/Defender/politika), **Uçlar** karşılaştırması, sürüm denetimi ve tanı paketi.
+- **Discord'u yeniden başlat** (durum çubuğu): kurulumdan sonra gereken "tamamen kapat, aç" adımı tek tık.
+- **Ağ değişti uyarısı:** Wi-Fi → kablo geçişinde DNS'i yenilemeyi önerir.
 - **Yönetici:** arayüz yöneticisiz açılır, işlem için UAC ile yükselir.
-- **Tek başına:** `WarpCord.exe`'yi tek başına kopyalasan da çalışır; motoru ilk açılışta `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` altına açar.
+- **Tek başına:** `WarpCord.exe`'yi tek başına kopyalasan da çalışır; motoru ilk açılışta `%LOCALAPPDATA%\WarpCord\engine\<sürüm>\` altına açar. `portable.txt` koyarsan ayarlar ve motor exe'nin yanında kalır.
+
+![Ayarlar](docs/ui-settings.png)
 
 ### İki kurulum yolu
 
@@ -49,7 +55,7 @@ gui\build.ps1                    :: dist\WarpCord.exe
 gui\build.ps1 -Shortcut -Smoke   :: masaüstü kısayolu + duman testi
 ```
 
-Diğer durumlar: [sorun var](docs/ui-broken.png) · [kurulu değil](docs/ui-empty.png) · [DPI motoru](docs/ui-dpi.png) · [gelişmiş panel](docs/ui-advanced.png) · [elle kurulum](docs/ui-manual.png) · [tek dosya](docs/ui-standalone.png) · [SAC uyarısı](docs/ui-sac.png)
+Diğer durumlar: [sorun var](docs/ui-broken.png) · [kurulu değil](docs/ui-empty.png) · [DPI motoru](docs/ui-dpi.png) · [gelişmiş panel](docs/ui-advanced.png) · [elle kurulum](docs/ui-manual.png) · [tek dosya](docs/ui-standalone.png) · [SAC uyarısı](docs/ui-sac.png) · [İngilizce arayüz](docs/ui-en.png)
 
 ## İki motor
 
@@ -145,7 +151,7 @@ Kurulumun sisteme dokunduğu yerler: `C:\ProgramData\DiscordTunnel` (loglar), za
 - **v2.0** — tek tık, Python'suz, uç otomatik seçimi, WARP engelliyse DPI motoru.
 - **v2.5** — koruyucu: 5 dakikada bir denetler ve onarır.
 - **v3.0** — temiz Windows 11'de tek tık: MOTW, GPO, Defender, SAC, WDAC engelleri + `tani.bat`.
-- **Arayüz 1.x** — logolu masaüstü uygulaması, kurulum yöntemi seçimi, tek dosya.
+- **Arayüz 4.0** — tepsi simgesi ve bildirimler, günlük sekmeleri, hazırlık/uç araçları, İngilizce arayüz, otomatik onarım, taşınabilir mod, tek dosya.
 
 Ayrıntılı notlar: [CHANGELOG.md](CHANGELOG.md)
 
