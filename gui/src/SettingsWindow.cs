@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
@@ -49,6 +50,12 @@ namespace WarpCord
         private ListBox _endpointsList;
         private Button _settingsClose, _readinessBtn, _endpointsBtn, _useBestBtn, _useSelectedBtn, _updateBtn, _bundleBtn;
         private List<EndpointRow> _endpointRows = new List<EndpointRow>();
+        private TextBlock _aboutSignature;
+        private Button _downloadBtn;
+        private bool _signatureLoaded;
+        private string _latestAssetUrl;
+        private string _latestAssetName;
+        private string _latestAssetDigest;
         private bool _busy;
 
         public SettingsWindow(Settings settings, Snapshot snapshot, Action onChanged)
@@ -127,6 +134,8 @@ namespace WarpCord
             _aboutStatus = N<TextBlock>("AboutStatus");
             _aboutLink = N<TextBlock>("AboutLink");
             _updateBtn = N<Button>("UpdateBtn");
+            _downloadBtn = N<Button>("DownloadBtn");
+            _aboutSignature = N<TextBlock>("AboutSignature");
             _bundleBtn = N<Button>("BundleBtn");
         }
 
@@ -153,6 +162,7 @@ namespace WarpCord
                 : "—";
             _aboutRepo.Text = RepoUrl;
             _aboutSource.Text = (Paths.IsEmbedded ? L10n.T("gömülü motor") : L10n.T("klasör")) + " · " + (Paths.RepoRoot ?? "—");
+            _aboutSignature.Text = "…";
             _aboutUpdate.Text = string.IsNullOrEmpty(_settings.LatestVersion)
                 ? "—"
                 : _settings.LatestVersion;
@@ -193,6 +203,7 @@ namespace WarpCord
             _useBestBtn.Click += delegate { UseBestEndpoint(); };
             _useSelectedBtn.Click += delegate { UseSelectedEndpoint(); };
             _updateBtn.Click += delegate { CheckVersion(); };
+            _downloadBtn.Click += delegate { DownloadUpdate(); };
             _bundleBtn.Click += delegate { MakeBundle(); };
             _aboutLink.MouseLeftButtonUp += delegate { OpenUrl(RepoUrl); };
         }
@@ -203,6 +214,7 @@ namespace WarpCord
             _panelReadiness.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
             _panelEndpoints.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
             _panelAbout.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+            if (index == 3 && !_signatureLoaded) LoadSignature();
         }
 
         private void SetLanguage(string language)
@@ -483,6 +495,10 @@ namespace WarpCord
                         _aboutLink.Visibility = Visibility.Visible;
 
                         int comparison = VersionUtil.Compare(latest, AppInfo.Version);
+                        ReadLatestAsset(node);
+                        _downloadBtn.Visibility = comparison > 0 && _latestAssetUrl != null
+                            ? Visibility.Visible
+                            : Visibility.Collapsed;
                         _aboutStatus.Text = comparison > 0
                             ? L10n.F("{0} yayında: {1}", L10n.T("Yeni sürüm var"), name)
                             : L10n.T("Güncel") + " · " + (string.IsNullOrEmpty(name) ? tag : name);
@@ -565,6 +581,107 @@ namespace WarpCord
             catch { }
         }
 
+private void ReadLatestAsset(object release)
+        {
+            _latestAssetUrl = null;
+            _latestAssetName = null;
+            _latestAssetDigest = null;
+
+            var assets = Json.Get(release, "assets") as System.Collections.IList;
+            if (assets == null) return;
+            foreach (object asset in assets)
+            {
+                string name = Json.Str(asset, "name");
+                if (name == null || !name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+                _latestAssetName = name;
+                _latestAssetUrl = Json.Str(asset, "browser_download_url");
+                _latestAssetDigest = Json.Str(asset, "digest");
+                return;
+            }
+        }
+
+        private void LoadSignature()
+        {
+            _signatureLoaded = true;
+            string path = "";
+            try { path = Process.GetCurrentProcess().MainModule.FileName; }
+            catch { }
+
+            Task.Run(delegate
+            {
+                SignatureInfo info = Signature.Read(path);
+                Dispatcher.BeginInvoke(new Action(delegate
+                {
+                    _aboutSignature.Text = info.Signed
+                        ? L10n.T("imzalı") + " · " + info.Subject
+                        : L10n.T("imzasız") + " · " + L10n.T("Smart App Control engelleyebilir");
+                    _aboutSignature.Foreground = info.Signed ? Palette.Green : Palette.Amber;
+                    _aboutSignature.ToolTip = info.Status;
+                }));
+            });
+        }
+
+        private async void DownloadUpdate()
+        {
+            if (string.IsNullOrEmpty(_latestAssetUrl))
+            {
+                _aboutStatus.Text = L10n.T("İndirme bağlantısı yok; sürümü yeniden denetle.");
+                return;
+            }
+
+            _downloadBtn.IsEnabled = false;
+            _aboutStatus.Text = L10n.T("İndiriliyor…");
+
+            string fileName = string.IsNullOrEmpty(_latestAssetName)
+                ? "WarpCord-" + (string.IsNullOrEmpty(_settings.LatestVersion) ? "new" : _settings.LatestVersion) + ".exe"
+                : _latestAssetName;
+            string folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            string target = Path.Combine(folder, fileName);
+
+            try
+            {
+                Directory.CreateDirectory(folder);
+                using (var response = await Http.GetAsync(_latestAssetUrl, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using (Stream file = File.Create(target))
+                    using (Stream download = await response.Content.ReadAsStreamAsync())
+                    {
+                        await download.CopyToAsync(file);
+                    }
+                }
+
+                string actual = HashFile(target);
+                bool verified = !string.IsNullOrEmpty(_latestAssetDigest) &&
+                                string.Equals(actual, _latestAssetDigest, StringComparison.OrdinalIgnoreCase);
+
+                _aboutStatus.Text = verified
+                    ? L10n.T("İndirildi ve doğrulandı") + ": " + target
+                    : L10n.T("İndirildi (özet yok, elle doğrula)") + ": " + target;
+                Process.Start("explorer.exe", "/select,\"" + target + "\"");
+            }
+            catch (Exception ex)
+            {
+                _aboutStatus.Text = L10n.T("İndirme başarısız") + ": " + ex.Message;
+            }
+            finally
+            {
+                _downloadBtn.IsEnabled = true;
+            }
+        }
+
+        private static string HashFile(string path)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            using (Stream stream = File.OpenRead(path))
+            {
+                byte[] hash = sha.ComputeHash(stream);
+                var text = new StringBuilder("sha256:");
+                foreach (byte value in hash) text.Append(value.ToString("x2"));
+                return text.ToString();
+            }
+        }
         private void SaveAndClose()
         {
             _settings.Save();
@@ -573,7 +690,7 @@ namespace WarpCord
         }
 
         /// <summary>Draws the settings window to a PNG (docs and visual checks).</summary>
-        public static void RenderTo(string path, double scale)
+        public static void RenderTo(string path, double scale, int tab)
         {
             Grid root = Xaml.Load<Grid>("WarpCord.SettingsWindow.xaml");
             var card = new Border
@@ -586,6 +703,7 @@ namespace WarpCord
             };
 
             PopulatePreview(root);
+            ShowPreviewPanel(root, tab);
 
             card.Measure(new Size(762, double.PositiveInfinity));
             card.Arrange(new Rect(0, 0, 762, card.DesiredSize.Height));
@@ -635,6 +753,28 @@ namespace WarpCord
             var engine = root.FindName("EngineNote") as TextBlock;
             if (engine != null) engine.Text = L10n.T("Motor") + ": " + (Paths.RepoRoot ?? "—");
 
+            var ui = root.FindName("AboutUi") as TextBlock;
+            if (ui != null) ui.Text = AppInfo.Version;
+            var tunnel = root.FindName("AboutTunnel") as TextBlock;
+            if (tunnel != null)
+            {
+                object state = Json.Node(Paths.StatePath);
+                string version = Json.Str(state, "version");
+                string mode = Json.Str(state, "mode");
+                tunnel.Text = version == null ? "—" : version + " · " + (mode ?? "?");
+            }
+            var repo = root.FindName("AboutRepo") as TextBlock;
+            if (repo != null) repo.Text = RepoUrl;
+            var source = root.FindName("AboutSource") as TextBlock;
+            if (source != null)
+                source.Text = (Paths.IsEmbedded ? L10n.T("gömülü motor") : L10n.T("klasör")) + " · " + (Paths.RepoRoot ?? "—");
+            var update = root.FindName("AboutUpdate") as TextBlock;
+            if (update != null)
+                update.Text = string.IsNullOrEmpty(settings.LatestVersion) ? "—" : settings.LatestVersion;
+            var signature = root.FindName("AboutSignature") as TextBlock;
+            if (signature != null)
+                signature.Text = L10n.T("imzasız") + " · " + L10n.T("Smart App Control engelleyebilir");
+
             L10n.Apply(root);
         }
 
@@ -645,6 +785,21 @@ namespace WarpCord
                 .OrderByDescending(r => r.Ok)
                 .ThenBy(r => r.Ms <= 0 ? int.MaxValue : r.Ms)
                 .ToList();
+        }
+private static void ShowPreviewPanel(Grid root, int tab)
+        {
+            string[] panels = { "PanelGeneral", "PanelReadiness", "PanelEndpoints", "PanelAbout" };
+            for (int i = 0; i < panels.Length; i++)
+            {
+                var panel = root.FindName(panels[i]) as FrameworkElement;
+                if (panel != null) panel.Visibility = i == tab ? Visibility.Visible : Visibility.Collapsed;
+            }
+            string[] tabs = { "TabGeneral", "TabReadiness", "TabEndpoints", "TabAbout" };
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                var radio = root.FindName(tabs[i]) as System.Windows.Controls.Primitives.ToggleButton;
+                if (radio != null) radio.IsChecked = i == tab;
+            }
         }
         private static void SetChecked(Grid root, string name, bool value)
         {

@@ -21,6 +21,7 @@ namespace WarpCord
         public bool AdvancedPreview;
         public string PromptRender;
         public string SettingsRender;
+        public int SettingsTab;
         public bool UseEmbeddedEngine;
         public bool Help;
 
@@ -76,6 +77,13 @@ namespace WarpCord
                         break;
                     case "--prompt":
                         options.PromptRender = Next(args, ref i, "--prompt");
+                        break;
+                    case "--settings-tab":
+                        {   string tab = Next(args, ref i, "--settings-tab");
+                            if (tab == "hazirlik") options.SettingsTab = 1;
+                            else if (tab == "uclar") options.SettingsTab = 2;
+                            else if (tab == "hakkinda") options.SettingsTab = 3;
+                        }
                         break;
                     case "--settings":
                         options.SettingsRender = Next(args, ref i, "--settings");

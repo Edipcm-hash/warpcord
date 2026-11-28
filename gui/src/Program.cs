@@ -103,7 +103,7 @@ namespace WarpCord
             {
                 try
                 {
-                    SettingsWindow.RenderTo(cli.SettingsRender, 1);
+                    SettingsWindow.RenderTo(cli.SettingsRender, 1, cli.SettingsTab);
                     return 0;
                 }
                 catch (Exception ex)

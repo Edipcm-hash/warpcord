@@ -50,6 +50,32 @@ namespace WarpCord
             }
         }
 
+        /// <summary>Runs an inline PowerShell command and returns its stdout.</summary>
+        public static string RunCommand(string command, int timeoutMs)
+        {
+            var info = new ProcessStartInfo(Paths.PowerShell,
+                "-NoProfile -ExecutionPolicy Bypass -NoLogo -NonInteractive -Command \"" + command + "\"");
+            info.UseShellExecute = false;
+            info.CreateNoWindow = true;
+            info.RedirectStandardOutput = true;
+            info.RedirectStandardError = true;
+            info.StandardOutputEncoding = new UTF8Encoding(false);
+            info.StandardErrorEncoding = new UTF8Encoding(false);
+
+            using (var process = new Process())
+            {
+                process.StartInfo = info;
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.StandardError.ReadToEnd();
+                if (!process.WaitForExit(timeoutMs))
+                {
+                    try { process.Kill(); } catch { }
+                    return "";
+                }
+                return output;
+            }
+        }
         public static string ToolPath(string fileName)
         {
             string root = Paths.RepoRoot;

@@ -249,6 +249,16 @@ namespace WarpCord
             { "Onar düğmesi bozulan parçayı kendisi düzeltir.", "Repair fixes the broken part." },
             { "İlk kurulum 1–2 dakika sürer.", "The first install takes 1–2 minutes." },
             { "API gecikmesi", "API latency" },
+            { "İmza", "Signature" },
+            { "İndir", "Download" },
+            { "İndiriliyor…", "Downloading…" },
+            { "İndirildi ve doğrulandı", "Downloaded and verified" },
+            { "İndirildi (özet yok, elle doğrula)", "Downloaded (no digest, verify manually)" },
+            { "İndirme başarısız", "Download failed" },
+            { "İndirme bağlantısı yok; sürümü yeniden denetle.", "No download link; run the version check again." },
+            { "imzalı", "signed" },
+            { "imzasız", "unsigned" },
+            { "Smart App Control engelleyebilir", "Smart App Control may block it" },
             { "arayüz", "ui" }
         };
 

@@ -1,4 +1,4 @@
-Türkçe | **[English](README.md)**
+Türkçe | **[English](README.md)** &nbsp; [![build](https://github.com/Edipcm-hash/warpcord/actions/workflows/build.yml/badge.svg)](https://github.com/Edipcm-hash/warpcord/actions/workflows/build.yml)
 
 # WarpCord
 
@@ -50,7 +50,7 @@ Arayüzü hiç açmayanlar için klasik yol her zaman duruyor: `WarpCord.bat`, `
 
 ### Derleme
 
-Windows ile gelen C# derleyicisi yeterlidir:
+Windows ile gelen C# derleyicisi yeterlidir (imzalama ve SAC notları: [docs/SIGNING.md](docs/SIGNING.md)):
 
 ```bat
 gui\build.ps1                    :: dist\WarpCord.exe

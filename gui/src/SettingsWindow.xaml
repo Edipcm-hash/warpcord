@@ -166,6 +166,7 @@
                         <RowDefinition Height="26"/>
                         <RowDefinition Height="26"/>
                         <RowDefinition Height="26"/>
+                        <RowDefinition Height="26"/>
                     </Grid.RowDefinitions>
                     <TextBlock Text="Arayüz" Style="{StaticResource Faint}" VerticalAlignment="Center"/>
                     <TextBlock x:Name="AboutUi" Grid.Column="1" FontSize="12" VerticalAlignment="Center"
@@ -182,10 +183,15 @@
                     <TextBlock Grid.Row="4" Text="Sürüm" Style="{StaticResource Faint}" VerticalAlignment="Center"/>
                     <TextBlock x:Name="AboutUpdate" Grid.Row="4" Grid.Column="1" FontSize="11.5" VerticalAlignment="Center"
                                Foreground="{StaticResource TextDimBrush}"/>
+                    <TextBlock Grid.Row="5" Text="İmza" Style="{StaticResource Faint}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="AboutSignature" Grid.Row="5" Grid.Column="1" FontSize="11.5" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextDimBrush}"/>
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                     <Button x:Name="UpdateBtn" Style="{StaticResource GhostButton}" Content="Sürümü denetle" Width="140"/>
+                    <Button x:Name="DownloadBtn" Style="{StaticResource GhostButton}" Content="İndir" Width="100"
+                            Margin="8,0,0,0" Visibility="Collapsed"/>
                     <Button x:Name="BundleBtn" Style="{StaticResource GhostButton}" Content="Tanı paketi" Width="130"
                             Margin="8,0,0,0"/>
                 </StackPanel>

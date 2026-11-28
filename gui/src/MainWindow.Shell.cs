@@ -1,6 +1,8 @@
 using System;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -247,6 +249,21 @@ namespace WarpCord
         }
 
         // ------------------------------------------------------------ auto repair
+private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F5)
+            {
+                Task ignore = ProbeAsync(true, true);
+                e.Handled = true;
+                return;
+            }
+
+            if (e.Key == Key.OemComma && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                Settings_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
         private void MaybeAutoHeal(Snapshot snapshot)
         {
             if (!_settings.AutoHeal || _busy || _renderMode) return;

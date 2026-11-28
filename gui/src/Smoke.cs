@@ -90,6 +90,10 @@ namespace WarpCord
                 Info("Discord API", snapshot.ApiText);
                 Info("dış IP", snapshot.PublicIp ?? "—");
                 Info("SmartApp", SmartAppControl.Name(SmartAppControl.Read()));
+                SignatureInfo signature = Signature.Read("");
+                Info("imza", signature.Signed
+                    ? L10n.T("imzalı") + " · " + signature.Subject
+                    : L10n.T("imzasız") + " · " + signature.Status);
                 Info("sonuç", snapshot.Healthy ? "sağlıklı" : "sağlıklı değil (uygulama için hata değil)");
             }
 

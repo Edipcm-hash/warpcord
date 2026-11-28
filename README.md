@@ -1,4 +1,4 @@
-**[Türkçe](README.tr.md)** | English
+**[Türkçe](README.tr.md)** | English &nbsp; [![build](https://github.com/Edipcm-hash/warpcord/actions/workflows/build.yml/badge.svg)](https://github.com/Edipcm-hash/warpcord/actions/workflows/build.yml)
 
 # WarpCord
 
@@ -50,7 +50,7 @@ The classic route stays for anyone who never opens the GUI: `WarpCord.bat`, `dur
 
 ### Building
 
-The C# compiler that ships with Windows is enough:
+The C# compiler that ships with Windows is enough (signing and SAC notes: [docs/SIGNING.md](docs/SIGNING.md)):
 
 ```bat
 gui\build.ps1                    :: dist\WarpCord.exe

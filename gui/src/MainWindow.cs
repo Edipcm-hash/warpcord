@@ -256,6 +256,11 @@ namespace WarpCord
             _tabTunnel = N<RadioButton>("TabTunnel");
             _tabRepair = N<RadioButton>("TabRepair");
             _latencySpark = N<Sparkline>("LatencySpark");
+            System.Windows.Automation.AutomationProperties.SetName(_settingsBtn, L10n.T("Ayarlar"));
+            System.Windows.Automation.AutomationProperties.SetName(_discordBtn, L10n.T("Discord'u yeniden başlat"));
+            System.Windows.Automation.AutomationProperties.SetName(_tabAction, L10n.T("İşlem"));
+            System.Windows.Automation.AutomationProperties.SetName(_tabTunnel, L10n.T("Tünel"));
+            System.Windows.Automation.AutomationProperties.SetName(_tabRepair, L10n.T("Onarım"));
             _sparkLabel = N<TextBlock>("SparkLabel");
             _tunnelLogBtn = N<Button>("TunnelLogBtn");
             _healLogBtn = N<Button>("HealLogBtn");
@@ -346,6 +351,7 @@ namespace WarpCord
             _tabAction.Checked += delegate { SetLogTab(LogTab.Action); };
             _tabTunnel.Checked += delegate { SetLogTab(LogTab.Tunnel); };
             _tabRepair.Checked += delegate { SetLogTab(LogTab.Repair); };
+            KeyDown += MainWindow_KeyDown;
             _tunnelLogBtn.Click += TunnelLog_Click;
             _healLogBtn.Click += HealLog_Click;
             _adminFixBtn.Click += AdminFix_Click;
