@@ -87,7 +87,7 @@ gui\build.ps1 -Shortcut -Smoke   :: desktop shortcut (with the logo) + smoke tes
 ```
 
 - XAML is embedded as a resource and parsed **at run time**; the logo is embedded both as the exe icon (`.ico`, 16–256 px) and as PNG. The output is a single file.
-- Logo generator: `tools/make-logo.py` → `gui/assets/warpcord.ico|png|svg` (needs Pillow; only when you touch the logo).
+- Logo generator: `tools/make-logo.py` → `gui/assets/warpcord.ico|svg` + 32/64/256 px PNGs (`--all` for every size; needs Pillow, only when you touch the logo).
 - The GUI's own command line: `WarpCord.exe --smoke` (self-test), `--exec status|heal|install|diagnose|uninstall` (run headless), `--render p.png --demo` (draw the window to PNG).
 
 ## Compatibility — which Windows, which connection?

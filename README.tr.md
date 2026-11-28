@@ -87,7 +87,7 @@ gui\build.ps1 -Shortcut -Smoke   :: masaüstü kısayolu (logo ile) + duman test
 ```
 
 - XAML gömülü kaynak olarak **çalışma anında** ayrıştırılır; logo hem exe simgesi (`.ico`, 16–256 px) hem PNG olarak gömülüdür. Ortaya tek dosya çıkar.
-- Logo üreteci: `tools/make-logo.py` → `gui/assets/warpcord.ico|png|svg` (Pillow ister; yalnızca logoyu elden geçirirken gerekir).
+- Logo üreteci: `tools/make-logo.py` → `gui/assets/warpcord.ico|svg` + 32/64/256 px PNG (`--all` ile tüm boyutlar; Pillow ister, yalnızca logoyu elden geçirirken gerekir).
 - Arayüzün kendi komut satırı: `WarpCord.exe --smoke` (kendi kendini test), `--exec status|heal|install|diagnose|uninstall` (arayüzsüz çalıştır), `--render p.png --demo` (arayüzü PNG'ye çiz).
 
 ## Uyumluluk — hangi Windows, hangi bağlantı?

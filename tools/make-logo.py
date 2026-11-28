@@ -5,7 +5,8 @@ Draws the app mark at a high master resolution, then renders every icon size
 from scratch (small sizes get a simplified drawing so they stay legible) and
 writes a multi-resolution .ico, PNG exports and the SVG source of the mark.
 
-    python tools/make-logo.py                     # write gui/assets/*
+    python tools/make-logo.py                     # write gui/assets/* (32/64/256 + ico + svg)
+    python tools/make-logo.py --all               # ... plus every other size
     python tools/make-logo.py --variant b         # try another mark
     python tools/make-logo.py --preview out.png   # contact sheet of variants
 """
@@ -416,6 +417,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default=DEFAULT, choices=sorted(MARKS))
     ap.add_argument("--preview", help="write a contact sheet of every variant here")
+    ap.add_argument("--all", action="store_true",
+                    help="also write 16/24/48/128/512 px and a 512 px copy")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "gui", "assets"))
     args = ap.parse_args()
 
@@ -438,10 +441,12 @@ def main():
     os.makedirs(out, exist_ok=True)
     write_ico(os.path.join(out, "warpcord.ico"), args.variant,
               [16, 20, 24, 32, 40, 48, 64, 96, 128, 256])
-    for size in (16, 24, 32, 48, 64, 128, 256, 512):
+    # only the sizes the app and the build actually use; --all for the rest
+    sizes = (16, 24, 32, 48, 64, 128, 256, 512) if args.all else (32, 64, 256)
+    for size in sizes:
         render(args.variant, size).save(os.path.join(out, f"warpcord-{size}.png"))
-    # a wide mark for the header row and docs
-    render(args.variant, 512).save(os.path.join(out, "warpcord.png"))
+    if args.all:
+        render(args.variant, 512).save(os.path.join(out, "warpcord.png"))
     with open(os.path.join(out, "warpcord.svg"), "w", encoding="utf-8") as fh:
         fh.write(SVG)
     print(f"wrote {out} (variant {args.variant})")
